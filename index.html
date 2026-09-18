@@ -9,6 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .hero-visual{background:#d8c6ae}
+    .hero-visual:before,.hero-visual:after{display:none}
+    .hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 43%;z-index:0}
+    .hero-photo-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(18,20,15,.02) 45%,rgba(18,20,15,.42) 100%);pointer-events:none}
+    .hero-visual .visual-bottom{z-index:2}
+    @media(max-width:900px){.hero-photo{object-position:center 38%}}
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -41,12 +49,9 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-label="Personal visual panel">
-          <div class="visual-topline">DICKY ADISAPUTRA</div>
-          <div class="visual-note">Learning by doing.<br>Building as I go.</div>
-          <div class="visual-center">
-            <span class="visual-monogram">DA</span>
-          </div>
+        <div class="hero-visual" aria-label="Photo of Dicky Adisaputra working at a cafe">
+          <img class="hero-photo" src="assets/dicky-hero.webp" alt="Dicky Adisaputra working at a cafe" />
+          <div class="hero-photo-shade"></div>
           <div class="visual-bottom">
             <span class="location-pill">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-12A7 7 0 1 0 5 9c0 6.6 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>
