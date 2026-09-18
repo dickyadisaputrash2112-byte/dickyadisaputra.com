@@ -25,6 +25,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Restore hero image
+        shell: bash
+        run: |
+          cat assets/dicky-hero.b64.1 assets/dicky-hero.b64.2 assets/dicky-hero.b64.3 assets/dicky-hero.b64.4 assets/dicky-hero.b64.5 | base64 --decode > assets/dicky-hero.webp
+          test -s assets/dicky-hero.webp
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
