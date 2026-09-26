@@ -24,7 +24,10 @@
         <a href="#building">Projects</a>
         <a href="#writing">Writing</a>
       </nav>
-      <a class="nav-cta" href="#contact">Let's connect <span>→</span></a>
+      <div class="nav-actions">
+        <button class="present-launch" id="present-launch" type="button">Present <span aria-hidden="true">▶</span></button>
+        <a class="nav-cta" href="#contact">Let's connect <span>→</span></a>
+      </div>
     </div>
   </header>
 
@@ -42,8 +45,8 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-label="Photo of Dicky Adisaputra working at a cafe">
-          <img class="hero-photo" src="assets/dicky-hero.webp" alt="Dicky Adisaputra working at a cafe" />
+        <div class="hero-visual" aria-label="Portrait of Dicky Adisaputra">
+          <img class="hero-photo" src="assets/dicky-hero-original.jpeg" alt="Dicky Adisaputra in a formal suit" fetchpriority="high" decoding="async" />
           <div class="hero-photo-shade"></div>
           <div class="visual-bottom">
             <span class="location-pill">
@@ -261,7 +264,7 @@
       </div>
     </section>
 
-    <section class="section beyond-section">
+    <section class="section beyond-section" id="beyond">
       <div class="wrap beyond-grid">
         <div>
           <span class="section-kicker">BEYOND WORK</span>
@@ -292,6 +295,24 @@
       <a href="#top">Back to top ↑</a>
     </div>
   </footer>
+
+  <div class="presentation" id="presentation" role="dialog" aria-modal="true" aria-label="Presentation mode" aria-hidden="true" hidden>
+    <div class="presentation-top">
+      <span class="presentation-brand">Dicky Adisaputra</span>
+      <span class="presentation-title" id="presentation-title"></span>
+      <button class="presentation-exit" id="presentation-exit" type="button" aria-label="Exit presentation">Exit <span aria-hidden="true">×</span></button>
+    </div>
+    <div class="presentation-stage" id="presentation-stage" aria-live="polite"></div>
+    <div class="presentation-bottom">
+      <div class="presentation-controls">
+        <button id="presentation-prev" type="button" aria-label="Previous slide">← <span>Previous</span></button>
+        <button id="presentation-play" type="button" aria-label="Pause presentation">Pause Ⅱ</button>
+        <button id="presentation-next" type="button" aria-label="Next slide"><span>Next</span> →</button>
+      </div>
+      <div class="presentation-progress" role="progressbar" aria-label="Presentation progress" aria-valuemin="1" aria-valuemax="7" aria-valuenow="1"><span id="presentation-progress-fill"></span></div>
+      <span class="presentation-count" id="presentation-count">01 / 07</span>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

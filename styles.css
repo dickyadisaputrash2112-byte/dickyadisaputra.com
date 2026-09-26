@@ -69,6 +69,11 @@ img,svg{display:block;max-width:100%}
   transition:transform .2s ease,background .2s ease;
 }
 .nav-cta:hover{transform:translateY(-1px);background:var(--olive-dark)}
+.nav-actions{justify-self:end;display:flex;align-items:center;gap:10px}
+button{font:inherit;cursor:pointer}
+.present-launch{border:1px solid var(--olive);background:transparent;color:var(--olive-dark);border-radius:999px;padding:11px 17px;font-size:.88rem;font-weight:600;white-space:nowrap}
+.present-launch:hover,.present-launch:focus-visible{background:var(--olive);color:#fff}
+.present-launch span{font-size:.7em;margin-left:4px}
 
 .hero{padding:62px 0 0}
 .hero-grid{
@@ -133,15 +138,16 @@ img,svg{display:block;max-width:100%}
   overflow:hidden;
   min-height:640px;
   border-radius:var(--radius) var(--radius) 0 0;
-  background:#d8c6ae;
+  background:#eeeae2;
 }
 .hero-photo{
   position:absolute;
-  inset:0;
-  width:100%;
+  inset:0 auto 0 50%;
+  transform:translateX(-50%);
+  width:min(100%,390px);
   height:100%;
-  object-fit:cover;
-  object-position:center 43%;
+  object-fit:contain;
+  object-position:center bottom;
 }
 .hero-photo-shade{
   position:absolute;
@@ -328,6 +334,56 @@ img,svg{display:block;max-width:100%}
 .footer-inner{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:.78rem}
 .footer a:hover{color:#fff}
 
+/* Presentation scenes are cloned from the homepage when opened. */
+body.presenting{overflow:hidden}
+.presentation[hidden]{display:none}
+.presentation{
+  position:fixed;inset:0;z-index:1000;
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+  background:var(--bg);color:var(--ink);
+}
+.presentation-top,.presentation-bottom{display:flex;align-items:center;gap:24px;padding:16px clamp(20px,4vw,56px)}
+.presentation-top{border-bottom:1px solid var(--line)}
+.presentation-brand{font-weight:700;letter-spacing:-.025em}
+.presentation-title{margin-left:auto;color:var(--olive);font-size:.86rem}
+.presentation-exit,.presentation-controls button{border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);padding:9px 15px;white-space:nowrap}
+.presentation-exit:hover,.presentation-controls button:hover:not(:disabled){background:#e8e9df}
+.presentation-exit span{font-size:1.3em;line-height:0;margin-left:8px}
+.presentation-stage{min-height:0;overflow:auto;overscroll-behavior:contain}
+.presentation-scene{min-height:100%;display:flex;align-items:center;justify-content:center;padding:clamp(22px,4vh,48px) 0}
+.presentation-scene>.wrap{width:min(calc(100% - 80px),var(--max))}
+.presentation-scene .section-heading{margin-bottom:24px}
+.presentation-scene .section-heading h2,.presentation-scene .beyond-grid h2,.presentation-scene.contact h2{font-size:clamp(2.3rem,4vw,3.7rem)}
+.presentation-scene.hero{padding:0}
+.presentation-scene .hero-grid{min-height:0;width:min(calc(100% - 80px),var(--max));grid-template-columns:1.12fr .88fr}
+.presentation-scene .hero-copy{padding:30px 48px 30px 0}
+.presentation-scene .hero-visual{min-height:min(70vh,650px);border-radius:22px}
+.presentation-scene .hero h1,.presentation-scene h1{font-size:clamp(3rem,5vw,5.5rem)}
+.presentation-scene .now-cards{grid-template-columns:repeat(3,1fr);gap:10px}
+.presentation-scene .now-card{min-height:0;padding:16px;border-radius:14px}
+.presentation-scene .now-card-wide{grid-column:span 2}
+.presentation-scene .now-card h3{font-size:1.25rem;margin:10px 0 5px}
+.presentation-scene .now-card>p{font-size:.79rem;line-height:1.42}
+.presentation-scene .card-bottom{padding-top:12px}
+.presentation-scene .client-row{margin-top:10px;padding-top:10px}
+.presentation-scene .tags span,.presentation-scene .client-list span{font-size:.63rem;min-height:0;padding:4px 7px}
+.presentation-scene .experience-item{padding:12px 0;gap:12px}
+.presentation-scene .experience-role h3{font-size:1.15rem}
+.presentation-scene .experience-item>p{font-size:.8rem}
+.presentation-scene .credential-grid article{min-height:150px}
+.presentation-scene .project-art{height:180px}
+.presentation-scene .project-body{padding:15px}
+.presentation-scene .project-body>p{min-height:0;font-size:.8rem}
+.presentation-scene .project-footer{margin-top:10px}
+.presentation-scene .beyond-list>div{padding:13px 0}
+.presentation-scene.contact{padding:30px 0}
+.presentation-bottom{border-top:1px solid var(--line);background:var(--surface);gap:20px}
+.presentation-controls{display:flex;gap:8px}
+.presentation-controls button:disabled{opacity:.35;cursor:default}
+.presentation-progress{height:4px;border-radius:99px;background:#dddcd2;flex:1;overflow:hidden}
+.presentation-progress span{display:block;height:100%;width:0;background:var(--olive);transition:width .12s linear}
+.presentation-count{font-size:.8rem;letter-spacing:.08em;white-space:nowrap;font-variant-numeric:tabular-nums}
+
 @media(max-width:1050px){
   .nav{display:none}
   .nav-wrap{grid-template-columns:1fr auto}
@@ -336,6 +392,18 @@ img,svg{display:block;max-width:100%}
   .experience-item{grid-template-columns:42px 1fr 1.2fr}
   .experience-item>a,.experience-meta{grid-column:2/-1;justify-self:start;text-align:left;margin-top:-14px}
   .credential-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:820px){
+  .presentation-scene>.wrap,.presentation-scene .hero-grid{width:min(calc(100% - 36px),var(--max))}
+  .presentation-scene{padding:24px 0}
+  .presentation-scene .hero-grid{grid-template-columns:1fr}
+  .presentation-scene .hero-copy{padding:10px 0 22px}
+  .presentation-scene .hero-visual{min-height:320px}
+  .presentation-scene .now-cards{grid-template-columns:1fr 1fr}
+  .presentation-scene .now-card-wide{grid-column:1/-1}
+  .presentation-scene .project-grid{grid-template-columns:repeat(3,1fr);gap:10px}
+  .presentation-scene .project-art{height:140px}
 }
 
 @media(max-width:820px){
@@ -370,7 +438,11 @@ img,svg{display:block;max-width:100%}
 
 @media(max-width:560px){
   .brand{font-size:.96rem}
+  .nav-wrap{gap:8px}
+  .nav-actions{gap:6px}
+  .present-launch{font-size:.77rem;padding:9px 11px}
   .nav-cta span{display:none}
+  .nav-cta{font-size:.72rem;padding:9px 8px}
   .hero-copy{padding-top:42px}
   .eyebrow{font-size:.62rem;line-height:1.6}
   .hero-actions{align-items:flex-start;flex-direction:column;gap:18px}
@@ -386,4 +458,35 @@ img,svg{display:block;max-width:100%}
   .beyond-list>div{grid-template-columns:1fr;gap:7px}
   .contact{padding:86px 0}
   .footer-inner{min-height:92px;flex-direction:column;justify-content:center}
+  .presentation-top,.presentation-bottom{padding:12px 16px;gap:9px}
+  .presentation-brand{font-size:.85rem}
+  .presentation-title{display:none}
+  .presentation-exit{margin-left:auto}
+  .presentation-controls{gap:5px}
+  .presentation-controls button{padding:9px 10px;font-size:.8rem}
+  .presentation-controls button span{display:none}
+  .presentation-bottom{flex-wrap:wrap}
+  .presentation-progress{order:3;flex-basis:100%}
+  .presentation-count{margin-left:auto}
+  .presentation-scene .hero-grid{display:flex;flex-direction:column}
+  .presentation-scene h1{font-size:clamp(2.65rem,11vw,4rem)}
+  .presentation-scene .hero h2,.presentation-scene h2{font-size:clamp(1.8rem,7vw,2.5rem)}
+  .presentation-scene .hero-intro{margin-top:14px;font-size:.9rem}
+  .presentation-scene .hero-actions{margin-top:18px}
+  .presentation-scene .hero-visual{min-height:300px}
+  .presentation-scene .split-heading{gap:8px}
+  .presentation-scene .split-heading>p{font-size:.85rem}
+  .presentation-scene .now-cards,.presentation-scene .project-grid{grid-template-columns:1fr}
+  .presentation-scene .now-card-wide{grid-column:auto}
+  .presentation-scene .project-card{display:grid;grid-template-columns:34% 1fr}
+  .presentation-scene .project-art{height:100%;min-height:155px}
+  .presentation-scene .project-art>p{font-size:1rem;left:12px}
+  .presentation-scene .project-body h3{font-size:1.1rem}
+  .presentation-scene .project-footer{display:none}
+  .presentation-scene .credential-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .presentation-scene .credential-grid article{min-height:105px;padding:14px}
+  .presentation-scene .credential-grid h3{margin-top:15px;font-size:1rem}
+  .presentation-scene .experience-item{grid-template-columns:25px 1fr}
+  .presentation-scene .experience-item>p{grid-column:2}
+}
 }
