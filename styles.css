@@ -310,9 +310,14 @@ button{font:inherit;cursor:pointer}
   padding:26px 0;
   border-bottom:1px solid var(--line);
 }
+.writing-list a{display:contents}
+.writing-list article{transition:color .2s ease,padding .2s ease}
+.writing-list article:hover{color:var(--olive);padding-left:8px}
 .writing-list article>span,.writing-list small{font-size:.75rem;color:#83867b}
 .writing-list h3{margin:0;font-size:1.45rem;letter-spacing:-.035em;font-weight:500}
 .writing-list small{text-align:right;text-transform:uppercase;letter-spacing:.1em}
+.writing-empty{padding:28px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:.9rem}
+.writing-all{display:inline-flex;align-items:center;gap:10px;margin-top:28px;color:var(--olive);font-size:.88rem;font-weight:600}
 
 .beyond-section{background:#f0f0e8}
 .beyond-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:100px;align-items:start}

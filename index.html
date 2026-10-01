@@ -22,7 +22,7 @@
         <a href="#now">Now</a>
         <a href="#past">Past</a>
         <a href="#building">Projects</a>
-        <a href="#writing">Writing</a>
+        <a href="writing/">Writing</a>
       </nav>
       <div class="nav-actions">
         <button class="present-launch" id="present-launch" type="button">Present <span aria-hidden="true">▶</span></button>
@@ -256,11 +256,10 @@
           <p>Notes from work, learning, faith, business, and life.</p>
         </div>
 
-        <div class="writing-list">
-          <article><span>Learning</span><h3>Good training should not start from slides</h3><small>Draft</small></article>
-          <article><span>Systems</span><h3>What certification operations taught me about systems</h3><small>Draft</small></article>
-          <article><span>Life</span><h3>Why I started learning about fatherhood before becoming one</h3><small>Draft</small></article>
+        <div class="writing-list" id="home-writing-list">
+          <div class="writing-empty">Memuat tulisan terbaru…</div>
         </div>
+        <a class="writing-all" href="writing/">Lihat semua tulisan <span>→</span></a>
       </div>
     </section>
 
@@ -315,5 +314,6 @@
   </div>
 
   <script src="script.js"></script>
+  <script type="module" src="writing-feed.js"></script>
 </body>
 </html>
