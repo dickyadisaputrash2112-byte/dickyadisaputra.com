@@ -12,12 +12,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="editorial.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="wrap nav-wrap">
       <a class="brand" href="#top">Dicky Adisaputra</a>
-      <nav class="nav" aria-label="Primary navigation">
+      <nav class="nav" id="primary-menu" aria-label="Primary navigation">
         <a class="active" href="#top">Home</a>
         <a href="#now">Now</a>
         <a href="#past">Past</a>
@@ -27,16 +28,17 @@
       <div class="nav-actions">
         <button class="present-launch" id="present-launch" type="button">Present <span aria-hidden="true">▶</span></button>
         <a class="nav-cta" href="#contact">Let's connect <span>→</span></a>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-menu">☰</button>
       </div>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
+      <div class="wrap hero-masthead"><span class="section-kicker">A PERSONAL SPACE · BOGOR, INDONESIA</span><h1>Hi, I’m<br><span>Dicky Adisaputra.</span></h1></div>
       <div class="wrap hero-grid">
         <div class="hero-copy">
           <div class="eyebrow">LEARNING&nbsp;&nbsp;/&nbsp;&nbsp;PEOPLE&nbsp;&nbsp;/&nbsp;&nbsp;OPERATIONS&nbsp;&nbsp;/&nbsp;&nbsp;BUSINESS</div>
-          <h1>Hi, I’m<br>Dicky Adisaputra.</h1>
           <h2>I work with learning, people, operations, and business.</h2>
           <p class="hero-intro">I build programs, run operations, develop people, and work on businesses and projects I care about.</p>
           <div class="hero-actions">
@@ -126,6 +128,7 @@
       </div>
     </section>
 
+    <div class="career-layout wrap">
     <section class="section past-section" id="past">
       <div class="wrap">
         <div class="section-heading split-heading">
@@ -194,6 +197,7 @@
       </div>
     </section>
 
+    </div>
     <section class="section building-section" id="building">
       <div class="wrap">
         <div class="section-heading split-heading">
@@ -214,6 +218,7 @@
               <h3>Ruang Ayat</h3>
               <p>A personal space for Qur’an reflection, journaling, dhikr, prayer times, and daily worship routines.</p>
               <div class="project-footer"><span>Faith</span><span>Reflection</span><span>Product</span></div>
+              <a class="project-visit" href="https://ruangayat.dickyadisaputra.com" target="_blank" rel="noopener">Explore Ruang Ayat ↗</a>
             </div>
           </article>
 

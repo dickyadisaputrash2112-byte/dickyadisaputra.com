@@ -1,5 +1,46 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
+// Keep navigation reachable at tablet and phone widths.
+const menuButton = document.querySelector('.menu-toggle');
+const header = document.querySelector('.site-header');
+function closeMenu() {
+  header.classList.remove('menu-open');
+  menuButton.setAttribute('aria-expanded', 'false');
+  menuButton.setAttribute('aria-label', 'Open navigation');
+}
+menuButton.addEventListener('click', () => {
+  const open = header.classList.toggle('menu-open');
+  menuButton.setAttribute('aria-expanded', String(open));
+  menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+});
+header.querySelectorAll('.nav a').forEach(link => link.addEventListener('click', closeMenu));
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
+document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
+
+// Animate sections only when motion is allowed; content stays visible without JS.
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+if ('IntersectionObserver' in window && !reducedMotion.matches) {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove('is-pending');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('main > .section > .wrap, .career-layout, main > .contact > .wrap').forEach(node => {
+    node.classList.add('scroll-turn');
+    if (node.getBoundingClientRect().top > window.innerHeight) node.classList.add('is-pending');
+    observer.observe(node);
+  });
+  reducedMotion.addEventListener('change', event => {
+    if (event.matches) {
+      observer.disconnect();
+      document.querySelectorAll('.is-pending').forEach(node => node.classList.remove('is-pending'));
+    }
+  });
+}
+
 (() => {
   const slides = [
     { selector: '.hero', title: 'Hero' },
@@ -37,6 +78,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
     const scene = document.querySelector(slides[index].selector).cloneNode(true);
     scene.removeAttribute('id');
     scene.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    scene.querySelectorAll('.is-pending').forEach(node => node.classList.remove('is-pending'));
     scene.classList.add('presentation-scene');
     stage.replaceChildren(scene);
     stage.scrollTop = 0;

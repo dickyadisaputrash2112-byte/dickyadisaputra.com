@@ -494,4 +494,3 @@ body.presenting{overflow:hidden}
   .presentation-scene .experience-item{grid-template-columns:25px 1fr}
   .presentation-scene .experience-item>p{grid-column:2}
 }
-}
