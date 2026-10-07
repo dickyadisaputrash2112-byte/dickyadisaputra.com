@@ -17,29 +17,61 @@ header.querySelectorAll('.nav a').forEach(link => link.addEventListener('click',
 document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
 document.addEventListener('click', event => { if (!header.contains(event.target)) closeMenu(); });
 
-// Animate sections only when motion is allowed; content stays visible without JS.
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-if ('IntersectionObserver' in window && !reducedMotion.matches) {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.remove('is-pending');
-        observer.unobserve(entry.target);
+// Scroll controls the entire entrance, in both directions. No scroll interception.
+(() => {
+  const preference = matchMedia('(prefers-reduced-motion: reduce)');
+  const panels = [...document.querySelectorAll('main > .section > .wrap, .career-layout, main > .contact > .wrap')];
+  const tiles = [...document.querySelectorAll('main .now-card, main .credential-grid article, main .project-card, main .beyond-list > div')];
+  const hero = document.querySelector('.hero');
+  let frame = 0;
+  let measured = [];
+  const clamp = value => Math.max(0, Math.min(1, value));
+  function pageTop(node) {
+    let top = 0;
+    for (let current = node; current; current = current.offsetParent) top += current.offsetTop;
+    return top;
+  }
+  function measure() {
+    measured = [...panels, ...tiles].map(node => ({ node, top: pageTop(node) }));
+    schedule();
+  }
+  function draw() {
+    frame = 0;
+    if (document.body.classList.contains('presenting')) return;
+    const height = innerHeight;
+    const small = innerWidth <= 820;
+    const amount = preference.matches ? 0 : 1;
+    measured.forEach(({ node, top }, index) => {
+      const distance = top - scrollY;
+      if (index < panels.length) {
+        const remaining = (1 - clamp((height * 1.12 - distance) / (height * .66))) * amount;
+        const direction = index % 2 ? -1 : 1;
+        node.style.setProperty('--turn', `${remaining * (small ? 5 : 8) * direction}deg`);
+        node.style.setProperty('--depth', `${remaining * (small ? 6 : 12)}deg`);
+        node.style.setProperty('--rise', `${remaining * (small ? 65 : 120)}px`);
+        node.style.setProperty('--size', 1 - remaining * .12);
+        node.style.setProperty('--visibility', 1 - remaining * .7);
+      } else {
+        const delay = ((index - panels.length) % 3) * 24;
+        const remaining = (1 - clamp((height * 1.02 - distance - delay) / (height * .3))) * amount;
+        node.style.setProperty('--tile-rise', `${remaining * (small ? 40 : 75)}px`);
+        node.style.setProperty('--tile-visibility', 1 - remaining * .8);
       }
     });
-  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
-  document.querySelectorAll('main > .section > .wrap, .career-layout, main > .contact > .wrap').forEach(node => {
-    node.classList.add('scroll-turn');
-    if (node.getBoundingClientRect().top > window.innerHeight) node.classList.add('is-pending');
-    observer.observe(node);
-  });
-  reducedMotion.addEventListener('change', event => {
-    if (event.matches) {
-      observer.disconnect();
-      document.querySelectorAll('.is-pending').forEach(node => node.classList.remove('is-pending'));
-    }
-  });
-}
+    hero.style.setProperty('--hero-drift', `${Math.min(scrollY, height) * (small ? .04 : .12) * amount}px`);
+    hero.style.setProperty('--hero-scale', 1 + clamp(scrollY / height) * .06 * amount);
+  }
+  function schedule() { if (!frame) frame = requestAnimationFrame(draw); }
+  panels.forEach(node => node.classList.add('motion-panel'));
+  tiles.forEach(node => node.classList.add('motion-tile'));
+  addEventListener('scroll', schedule, { passive: true });
+  addEventListener('resize', measure, { passive: true });
+  document.addEventListener('fullscreenchange', schedule);
+  preference.addEventListener('change', schedule);
+  document.fonts?.ready.then(measure);
+  addEventListener('load', measure, { once: true });
+  measure();
+})();
 
 (() => {
   const slides = [
