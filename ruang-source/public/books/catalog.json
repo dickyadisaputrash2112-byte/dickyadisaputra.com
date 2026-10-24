@@ -1,0 +1,82 @@
+[
+  {
+    "id": "book-principles-marketing",
+    "title": "Principles of Marketing",
+    "topic": "Marketing",
+    "categories": [
+      "Marketing"
+    ],
+    "source": "OpenStax · Rice University",
+    "type": "book",
+    "format": "book",
+    "url": "https://openstax.org/details/books/principles-marketing",
+    "description": "Pemasaran, perilaku konsumen, segmentasi, merek, dan strategi digital.",
+    "guide": "Pilih satu bab, jelaskan ide utamanya, lalu hubungkan dengan pengalamanmu.",
+    "textKind": "full",
+    "authors": [
+      "Maria Gomez Albrecht",
+      "Mark Green",
+      "Linda Hoffman"
+    ],
+    "license": "CC BY-NC-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Principles of Marketing, OpenStax, Rice University. Diadaptasi dari sumber a6d7372579d13e0a733954953c4613867f018a48: judul, paragraf, tabel, dan keterangan gambar ditata ulang. Lisensi asli dan kredit gambar dipertahankan; video dan materi pengajar tidak disertakan. Tidak berafiliasi atau didukung OpenStax.",
+    "bookFile": "/ruang-tumbuh/books/principles-marketing.json",
+    "wordCount": 235783,
+    "language": "en",
+    "year": 2023
+  },
+  {
+    "id": "book-introduction-business-2e",
+    "title": "Introduction to Business 2e",
+    "topic": "Bisnis",
+    "categories": [
+      "Bisnis"
+    ],
+    "source": "OpenStax · Rice University",
+    "type": "book",
+    "format": "book",
+    "url": "https://openstax.org/details/books/introduction-business-2e",
+    "description": "Sistem ekonomi, etika, kewirausahaan, manajemen, dan keuangan.",
+    "guide": "Pilih satu bab, jelaskan ide utamanya, lalu hubungkan dengan pengalamanmu.",
+    "textKind": "full",
+    "authors": [
+      "OpenStax"
+    ],
+    "license": "CC BY-NC-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Introduction to Business 2e, OpenStax, Rice University. Diadaptasi dari sumber 2a839877ab89a207c9b9e501df438173013fa45c: judul, paragraf, tabel, dan keterangan gambar ditata ulang. Lisensi asli dan kredit gambar dipertahankan; video dan materi pengajar tidak disertakan. Tidak berafiliasi atau didukung OpenStax.",
+    "bookFile": "/ruang-tumbuh/books/introduction-business-2e.json",
+    "wordCount": 291219,
+    "language": "en"
+  },
+  {
+    "id": "book-psychology-2e",
+    "title": "Psychology 2e",
+    "topic": "Psikologi",
+    "categories": [
+      "Psikologi",
+      "Pendidikan",
+      "Neuroscience"
+    ],
+    "source": "OpenStax · Rice University",
+    "type": "book",
+    "format": "book",
+    "url": "https://openstax.org/details/books/psychology-2e",
+    "description": "Metode penelitian, otak, pembelajaran, ingatan, dan perilaku.",
+    "guide": "Pilih satu bab, jelaskan ide utamanya, lalu hubungkan dengan pengalamanmu.",
+    "textKind": "full",
+    "authors": [
+      "Rose M. Spielman",
+      "William J. Jenkins",
+      "Marilyn D. Lovett"
+    ],
+    "license": "CC BY-NC-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Psychology 2e, OpenStax, Rice University. Diadaptasi dari sumber 43035bcc5dd238f2e236ef532a01f11d6a59fc9d: judul, paragraf, tabel, dan keterangan gambar ditata ulang. Lisensi asli dan kredit gambar dipertahankan; video dan materi pengajar tidak disertakan. Tidak berafiliasi atau didukung OpenStax.",
+    "bookFile": "/ruang-tumbuh/books/psychology-2e.json",
+    "wordCount": 324688,
+    "language": "en",
+    "year": 2020
+  }
+]

@@ -1,0 +1,7 @@
+import type{Block,Reading}from'./model.ts';
+export type PrivateBook={reading:Reading;blocks:Block[];metadata:string};
+export function validateBook(value:unknown):PrivateBook{
+ const v=value as PrivateBook,r=v?.reading;if(!r||!/^personal-[a-zA-Z0-9-]{8,100}$/.test(r.id)||typeof r.title!=='string'||r.title.length>1000||typeof r.topic!=='string'||r.topic.length>100||!Array.isArray(v.blocks)||v.blocks.length<2||v.blocks.length>25000)throw new Error('Format buku tidak valid.');
+ const seen=new Set<string>();let length=0;const blocks=v.blocks.map(b=>{if(!b||typeof b.id!=='string'||b.id.length>200||seen.has(b.id)||!['heading','paragraph','caption'].includes(b.kind)||typeof b.text!=='string'||(length+=b.text.length)>5_000_000)throw new Error('Teks buku terlalu besar atau susunannya tidak valid.');seen.add(b.id);return{id:b.id,kind:b.kind,text:b.text,...b.page?{page:b.page}:{},section:'body' as const};});
+ return{reading:{id:r.id,title:r.title,topic:r.topic,type:'personal',format:'book',bookId:r.id,source:r.source==='PDF pribadi'?'PDF pribadi':'EPUB pribadi',url:'',description:blocks.find(b=>b.kind==='paragraph')?.text.slice(0,180)||'',guide:'Apa ide utama bagian ini, dan bagaimana kamu memahaminya?',textKind:'full',authors:Array.isArray(r.authors)?r.authors.filter(a=>typeof a==='string').slice(0,30):[],language:r.language==='id'?'id':'en',wordCount:blocks.reduce((n,b)=>n+b.text.split(/\s+/).length,0)},blocks,metadata:'Buku pribadi. Teks ditata ulang dari berkas yang kamu unggah. Berkas asli tetap di perangkat; ilustrasi dan tata letak dapat berbeda.'};
+}

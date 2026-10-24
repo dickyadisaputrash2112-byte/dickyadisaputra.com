@@ -1,3 +1,4 @@
+import{validateBook}from'../lib/books.ts';
 import{fetchNews,combineNews,newsKey,type NewsFeed}from'./news.ts';
 import{selectQuote,wibDay}from'../lib/quote.ts';
 import{createCatalog,ready}from'../lib/catalog/service.ts';
@@ -42,11 +43,13 @@ Deno.serve(async(req:Request)=>{
   if(route==='topics/refresh'&&req.method==='POST'){const {topic}=await req.json(),account=await state(user.id);if(typeof topic!=='string'||!account.data.preferences.topics.includes(topic))return json({error:'Topik belum tersimpan.'},400);return json(await topicRefresh(topic));}
   if(route==='state'&&req.method==='GET')return json(await state(user.id));
   if(route==='state'&&req.method==='PUT'){const text=await req.text();if(text.length>12_000_000)return json({error:'Data terlalu besar. Ekspor dan kurangi berkas impor.'},413);const body=JSON.parse(text);if(!body.entries||!Array.isArray(body.custom)||!Array.isArray(body.preferences?.topics)||body.preferences.topics.length>50||body.preferences.topics.some((t:unknown)=>typeof t!=='string'||t.length>100))return json({error:'Format simpanan tidak valid.'},400);return json(await saveState(user.id,body));}
+  if(route==='books/document'&&req.method==='POST'){const raw=await req.text();if(raw.length>8_000_000)return json({error:'Teks buku terlalu besar. Impor per bagian.'},413);let doc;try{doc=validateBook(JSON.parse(raw));}catch(e){return json({error:(e as Error).message},400);}const key='private-book:'+user.id+':'+doc.reading.id,existing=await store.get<any>(key);if(existing&&JSON.stringify(existing.blocks)!==JSON.stringify(doc.blocks))return json({error:'Buku dengan identitas ini sudah ada dan isinya berbeda. Unggah sebagai buku baru agar stabilo lama tetap cocok.'},409);if(!existing)await store.put(key,doc);return json({reading:existing?.reading||doc.reading});}
+  if(route==='books/document'&&req.method==='GET'){const id=url.searchParams.get('id')||'';if(!/^personal-[a-zA-Z0-9-]{8,100}$/.test(id))return json({error:'Buku tidak valid.'},400);const doc=await store.get('private-book:'+user.id+':'+id);return doc?json(doc):json({error:'Buku belum ditemukan. Unggah kembali berkas aslinya.'},404);}
   if(route==='daily'&&req.method==='GET')return json(await daily(user.id));
   if(route==='news'&&req.method==='GET')return json(await ownerNews(user.id));
   if(route==='discover'&&req.method==='GET'){const q=(url.searchParams.get('q')||'').trim();if(q.length<2||q.length>100)return json({error:'Tulis topik 2–100 karakter.'},400);return json(await catalog.search(q,url.searchParams.get('year')==='2024'?2024:new Date().getUTCFullYear(),url.searchParams.get('order')==='latest'?'latest':'relevance'));}
   if(route==='library/document'&&req.method==='GET'){const doc=await catalog.document(url.searchParams.get('id')||'');return doc?json(doc):json({error:'Teks lengkap belum tersedia.'},404);}
-  if(route==='export'&&req.method==='GET'){const account=await state(user.id);return json({...account.data,format:'ruang-portable',version:3,exportedAt:new Date().toISOString(),catalog:await catalog.snapshot()});}
+  if(route==='export'&&req.method==='GET'){const account=await state(user.id);return json({...account.data,format:'ruang-portable',version:3,exportedAt:new Date().toISOString(),catalog:await catalog.snapshot(),books:await store.list('private-book:'+user.id+':')});}
   if(route==='article'&&req.method==='POST'){const body=await req.json(),r=await sourceFetch(String(body.url||''));if(r.headers.get('content-type')?.includes('pdf')){const bytes=await r.arrayBuffer();if(bytes.byteLength>25_000_000)return json({error:'PDF terlalu besar.'},413);return new Response(bytes,{headers:{...cors,'Content-Type':'application/pdf'}});}return json(fromHtml(await r.text(),body.url));}
   return json({error:'Halaman tidak tersedia.'},404);
  }catch(e){console.error('Ruang request failed',route,(e as Error).message);return json({error:(e as Error).message||'Permintaan belum berhasil. Coba kembali.'},502);}
