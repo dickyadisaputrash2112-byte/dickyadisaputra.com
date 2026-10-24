@@ -25,13 +25,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ruang-source/package-lock.json
+
+      - name: Build Ruang Tumbuh
+        run: npm ci --prefix ruang-source && npm run build --prefix ruang-source
+
+      - name: Stage public website
+        run: |
+          mkdir -p _site
+          rsync -a --exclude=".git" --exclude=".github" --exclude="_site" --exclude="ruang-source" --exclude="supabase" --exclude=".gitignore" --exclude="README.md" ./ _site/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

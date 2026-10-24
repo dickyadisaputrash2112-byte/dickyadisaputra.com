@@ -1,0 +1,16 @@
+import{createRoot}from'react-dom/client';
+import{useEffect,useState}from'react';
+import{BookOpen,ArrowRight,Loader2,LogOut}from'lucide-react';
+import Home from'./app/page';
+import Capture from'./app/capture/page';
+import{supabase,OWNER_EMAIL,isPreview}from'./lib/api';
+import'./app/globals.css';
+function App(){const[status,setStatus]=useState<'loading'|'signin'|'ready'>(isPreview?'ready':'loading'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{if(isPreview)return;let alive=true;async function check(){const{data,error}=await supabase.auth.getUser();if(!alive)return;setStatus(!error&&data.user?.email?.toLowerCase()===OWNER_EMAIL?'ready':'signin');}check();const{data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{if(alive)setStatus(session?.user.email?.toLowerCase()===OWNER_EMAIL?'ready':'signin');});return()=>{alive=false;subscription.unsubscribe();};},[]);
+ async function login(e:React.FormEvent){e.preventDefault();setBusy(true);setMessage('');try{const{data,error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw new Error('Email atau password belum cocok. Gunakan akun website milikmu.');if(data.user.email?.toLowerCase()!==OWNER_EMAIL){await supabase.auth.signOut();throw new Error('Ruang ini hanya dapat dibuka oleh pemiliknya.');}setPassword('');setStatus('ready');}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}
+ async function logout(){await supabase.auth.signOut();localStorage.removeItem('ruang-tumbuh-owner-v1');setStatus('signin');}
+ if(status==='loading')return<main className="auth-page"><Loader2 className="spin"/><p>Membuka ruangmu…</p></main>;
+ if(status==='signin')return<main className="auth-page"><a className="home-return" href="/">← dickyadisaputra.com</a><section className="auth-card"><span className="brand"><span className="brand-icon"><BookOpen size={24}/></span>ruang.</span><span className="eyebrow">RUANG TUMBUH</span><h1>Waktu kecil.<br/><em>Pemahaman baru.</em></h1><p>Jurnal pilihan, bacaan dunia, dan ruang untuk merangkai pemahamanmu sendiri.</p><form onSubmit={login}><label className="form-field">Email<input autoComplete="username" type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="form-field">Password<input autoComplete="current-password" type="password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{message&&<p className="inline-warning" role="alert">{message}</p>}<button className="button primary" disabled={busy}>{busy?<Loader2 className="spin" size={17}/>:<ArrowRight size={17}/>}Masuk ke ruangku</button></form><small>Gunakan akun yang sama dengan Writing Studio. Bacaan, stabilo, dan catatan hanya dapat diakses olehmu.</small></section></main>;
+ return<><button className="account-exit" onClick={logout} title="Keluar akun" aria-label="Keluar akun"><LogOut size={15}/></button>{new URLSearchParams(location.search).has('capture')?<Capture/>:<Home/>}</>;
+}
+createRoot(document.getElementById('root')!).render(<App/>);

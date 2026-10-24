@@ -1,0 +1,5 @@
+ruang-source/node_modules/
+ruang-tumbuh/
+.env*
+*.local
+.DS_Store
