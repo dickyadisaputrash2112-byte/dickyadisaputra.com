@@ -24,7 +24,7 @@ def text(n):
 manifest=[]
 for repo,slug,topic,year,authors,description in SPECS:
  commit=json.loads(get(f'https://api.github.com/repos/openstax/{repo}/commits/main'))['sha'];base=f'https://raw.githubusercontent.com/openstax/{repo}/{commit}/';collection=ET.fromstring(get(base+'collections/'+slug+'.collection.xml'));license=next(n for n in collection.iter() if local(n)=='license').attrib['url'].replace('http:','https:');title=next(n for n in collection.iter() if local(n)=='title').text
- modules=[n.attrib['document'] for n in collection.iter() if local(n)=='module'];cache=ROOT.parent.parent/'book-sources'/repo;cache.mkdir(exist_ok=True,parents=True)
+ modules=[n.attrib['document'] for n in collection.iter() if local(n)=='module'];cache=ROOT/'.cache/open-books'/repo;cache.mkdir(exist_ok=True,parents=True)
  def load(mid):
   p=cache/(commit+'-'+mid+'.xml')
   if not p.exists():p.write_bytes(get(base+'modules/'+mid+'/index.cnxml'))

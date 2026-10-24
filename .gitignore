@@ -3,3 +3,5 @@ ruang-tumbuh/
 .env*
 *.local
 .DS_Store
+
+ruang-source/.cache/
