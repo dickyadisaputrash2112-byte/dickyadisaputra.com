@@ -17,9 +17,13 @@ import{ManageDialogs}from'@/components/manage-dialogs';
 const navigation=[{id:'today',label:'Hari ini',icon:LayoutDashboard},{id:'library',label:'Perpustakaan',icon:Library},{id:'news',label:'Berita dunia',icon:Globe2},{id:'saved',label:'Disimpan',icon:Bookmark},{id:'notes',label:'Catatan belajar',icon:NotebookPen}];
 
 type Daily={papers:Reading[];updatedAt:string|null;errors:string[];quote?:DailyQuote|null};
+function jakartaDay(now=Date.now()){return Math.floor((now+7*60*60*1000)/86400000);}
+function dailyChoice(items:Reading[],day:number){const unique=items.filter((r,i,a)=>a.findIndex(x=>x.id===r.id)===i),current=unique.filter(r=>r.year===2026),pool=(current.length?current:unique).sort((a,b)=>a.id.localeCompare(b.id));return pool.length?pool[(((day+1)%pool.length)+pool.length)%pool.length]:undefined;}
 function date(s?:string){if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?'':d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Jakarta'});}
 export default function Home(){
  const learning=useLearning(),{data,change,patch,cloud}=learning;
+ const[day,setDay]=useState(()=>jakartaDay());
+ useEffect(()=>{const check=()=>setDay(jakartaDay()),timer=setInterval(check,30000);window.addEventListener('focus',check);document.addEventListener('visibilitychange',check);return()=>{clearInterval(timer);window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};},[]);
  const[view,setView]=useState('today'),[selected,setSelected]=useState<Reading|null>(null),[jump,setJump]=useState(''),[daily,setDaily]=useState<Daily>({papers:bundledReadings as Reading[],updatedAt:null,errors:[]}),[news,setNews]=useState<Reading[]>([]),[newsUpdated,setNewsUpdated]=useState(''),[feedError,setFeedError]=useState(''),[loading,setLoading]=useState(false),[query,setQuery]=useState(''),[results,setResults]=useState<Reading[]|null>(null),[searchLabel,setSearchLabel]=useState(''),[searchNotice,setSearchNotice]=useState(''),[searching,setSearching]=useState(false),[order,setOrder]=useState('relevance'),[filter,setFilter]=useState('Semua'),[collection,setCollection]=useState('Semua'),[undo,setUndo]=useState<Reading|null>(null),[notesTab,setNotesTab]=useState('learn'),[notice,setNotice]=useState(''),[settings,setSettings]=useState(false),[importing,setImporting]=useState(false),[policyOpen,setPolicyOpen]=useState(false);
  useEffect(()=>{const v=new URL(location.href).searchParams.get('view');if(v&&navigation.some(n=>n.id===v))setView(v);if('serviceWorker'in navigator)navigator.serviceWorker.register('/ruang-tumbuh/sw.js').catch(()=>{});loadFeeds();},[]);
  useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6500);return()=>clearTimeout(timer);},[notice]);
@@ -29,7 +33,8 @@ export default function Home(){
  const all=useMemo(()=>activeReadings([...data.custom.map(r=>data.entries[r.id]?.item||r),...Object.values(data.entries).flatMap(e=>e.item?[e.item]:[]),...daily.papers.filter(ready),...seeds,...bookCatalog as Reading[],...news],data),[data,daily,news]);
  const categories=categoryList(view==='news'?news:all,data),ensured=useRef(new Set<string>());
  useEffect(()=>{if(cloud!=='saved')return;const pending=data.preferences.topics.filter(t=>!ensured.current.has(t.toLowerCase()));if(!pending.length)return;pending.forEach(t=>ensured.current.add(t.toLowerCase()));(async()=>{for(const topic of pending){try{await fetch('/ruang-tumbuh/api/topics/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic})});}catch{ensured.current.delete(topic.toLowerCase());}}loadFeeds();})();},[cloud,JSON.stringify(data.preferences.topics)]);
- const recommended=daily.papers.find(r=>ready(r)&&r.curation?.review==='editorial'&&!data.entries[r.id]?.done)||daily.papers.find(r=>ready(r)&&!data.entries[r.id]?.done)||daily.papers[0]||seeds.find(r=>!data.entries[r.id]?.done)||seeds[0];
+ const dailyPool=activeReadings([...bundledReadings as Reading[],...daily.papers].filter(ready),data),editorial=dailyPool.filter(r=>r.curation?.review==='editorial');
+ const recommended=dailyChoice(editorial.length>1?editorial:dailyPool,day)||dailyChoice(seeds,day)||seeds[0];
  const marks=all.flatMap(item=>(data.entries[item.id]?.highlights||[]).filter(h=>!h.deletedAt).map(mark=>({item,mark})));
  function nav(id:string){setSelected(null);setJump('');setView(id);setFilter('Semua');setCollection('Semua');setResults(null);window.scrollTo({top:0});}
  function open(item:Reading,block=''){setSelected(item);setJump(block);window.scrollTo({top:0});}
