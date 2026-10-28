@@ -11,62 +11,113 @@ function el(tag, className, text) {
   return node;
 }
 
-function openImage(src, title, caption = '') {
-  const image = $('#expanded-image');
-  image.src = src;
-  image.alt = title;
+const galleryCategories = [
+  { id: 'work', title: 'Work', subtitle: 'People, projects & moments in between.' },
+  { id: 'outdoors', title: 'Mountains & places', subtitle: 'A little further from the everyday.' },
+  { id: 'other', title: 'Other moments', subtitle: 'The little things along the way.' }
+];
+let galleryPhotos = [], galleryIndex = 0, galleryTitle = '';
+const imageDialog = $('#image-dialog');
+imageDialog.setAttribute('aria-labelledby', 'image-title');
+const imageStage = el('div', 'image-stage');
+const expandedImage = $('#expanded-image'); expandedImage.draggable = false;
+expandedImage.before(imageStage);
+const previousPhoto = el('button', 'gallery-arrow previous', '←'); previousPhoto.type = 'button'; previousPhoto.setAttribute('aria-label', 'Foto sebelumnya');
+const nextPhoto = el('button', 'gallery-arrow next', '→'); nextPhoto.type = 'button'; nextPhoto.setAttribute('aria-label', 'Foto berikutnya');
+imageStage.append(previousPhoto, expandedImage, nextPhoto);
+const galleryPosition = el('p', 'gallery-position'); galleryPosition.setAttribute('aria-live', 'polite'); galleryPosition.setAttribute('aria-atomic', 'true');
+const imageError = el('p', 'gallery-error', 'Foto belum dapat dimuat. Coba foto berikutnya atau buka kembali album ini.'); imageError.hidden = true; imageError.setAttribute('role', 'status');
+const galleryThumbnails = el('div', 'gallery-thumbnails'); galleryThumbnails.setAttribute('role', 'group'); galleryThumbnails.setAttribute('aria-label', 'Pilih foto dalam album');
+imageDialog.append(imageError, galleryPosition, galleryThumbnails);
+function displayImage(src, title, caption) {
+  imageError.hidden = true;
+  expandedImage.src = src; expandedImage.alt = title;
   $('#image-title').textContent = title;
-  $('#image-caption').textContent = caption;
-  $('#image-caption').hidden = !caption;
-  $('#image-dialog').showModal();
+  $('#image-caption').textContent = caption || ''; $('#image-caption').hidden = !caption;
+  expandedImage.classList.remove('slide-enter');
+  void expandedImage.offsetWidth; expandedImage.classList.add('slide-enter');
 }
-
-const mountainPlaceholder = '<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="303" cy="65" r="27" fill="#d4d4d4"/><path d="M-30 300 150 50 330 300" fill="#cfcfcf"/><path d="m72 161 78-111 82 118-55-33-31 16-23-22Z" fill="#eaeaea"/><path d="M100 300 310 105 470 300" fill="#c0c0c0"/><path d="m0 258 113-79 127 121H0Z" fill="#b5b5b5" opacity=".65"/><path d="m280 300 30-195 160 195" fill="#b6b6b6" opacity=".5"/></svg>';
-
-function placeholder(category) {
-  const figure = el('figure', 'photo-item');
-  const button = el('div', `photo-placeholder ${category === 'work' ? 'work-placeholder' : ''}`);
-  button.setAttribute('aria-label', category === 'work' ? 'Koleksi foto profesional' : 'Koleksi foto gunung dan perjalanan');
-  if (category === 'outdoors') button.innerHTML = mountainPlaceholder;
-  else button.append(el('span', 'frame-outline'));
-  const copy = el('span', 'placeholder-copy', category === 'work' ? 'A moment from work.' : 'Somewhere up there.');
-  copy.append(el('small', '', category === 'work' ? 'A few frames from the work.' : 'A little further from the everyday.'));
-  button.append(copy);
-
-  const caption = el('figcaption', 'photo-caption');
-  const title = el('span', '', category === 'work' ? 'At work, in between.' : 'Mountains & places');
-  title.append(el('small', '', 'Coming soon · koleksi foto'));
-  caption.append(title, el('span', 'photo-tag', category === 'work' ? 'Work' : 'Outdoors'));
-  figure.append(button, caption);
-  return figure;
+expandedImage.addEventListener('error', () => { if(imageDialog.open) imageError.hidden = false; });
+expandedImage.addEventListener('load', () => { imageError.hidden = true; });
+function showImageDialog() {
+  document.documentElement.classList.add('image-viewer-open');
+  if (!imageDialog.open) imageDialog.showModal();
 }
-
-function photoCard(photo, original = false) {
-  const figure = el('figure', 'photo-item');
-  const button = el('button', 'photo-image');
-  button.type = 'button';
-  button.setAttribute('aria-label', `Perbesar foto ${photo.caption}`);
-  const image = el('img');
-  image.src = photo.src;
-  image.alt = photo.caption;
-  image.loading = 'lazy';
-  button.append(image);
-  button.addEventListener('click', () => openImage(photo.src, photo.caption, photo.location));
-  const caption = el('figcaption', 'photo-caption');
-  const description = el('span', '', photo.caption);
-  if (photo.location) description.append(el('small', '', photo.location));
-  caption.append(description, el('span', 'photo-tag', photo.category === 'work' ? 'Work' : 'Outdoors'));
-  figure.append(button, caption);
-  return figure;
+function openImage(src, title, caption = '') {
+  galleryPhotos = []; imageDialog.classList.remove('gallery-viewer');
+  previousPhoto.hidden = nextPhoto.hidden = galleryPosition.hidden = galleryThumbnails.hidden = true;
+  galleryThumbnails.replaceChildren(); displayImage(src, title, caption); showImageDialog();
 }
-
+function showGalleryPhoto(index, moveThumbnail = true) {
+  if (!galleryPhotos.length) return;
+  galleryIndex = (index + galleryPhotos.length) % galleryPhotos.length;
+  const photo = galleryPhotos[galleryIndex];
+  displayImage(photo.src, photo.caption, photo.location);
+  galleryPosition.textContent = `${galleryTitle} · ${galleryIndex + 1} dari ${galleryPhotos.length} foto`;
+  [...galleryThumbnails.children].forEach((button, i) => { button.setAttribute('aria-current', String(i === galleryIndex)); button.tabIndex = i === galleryIndex ? 0 : -1; });
+  if (moveThumbnail) galleryThumbnails.children[galleryIndex]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function openAlbum(photos, title) {
+  if (!photos.length) return;
+  galleryPhotos = [...photos]; galleryIndex = 0; galleryTitle = title; imageDialog.classList.add('gallery-viewer');
+  previousPhoto.hidden = nextPhoto.hidden = photos.length < 2;
+  galleryPosition.hidden = false; galleryThumbnails.hidden = photos.length < 2; galleryThumbnails.replaceChildren();
+  photos.forEach((photo, index) => {
+    const button = el('button', 'gallery-thumbnail'); button.type = 'button'; button.setAttribute('aria-label', `Lihat foto ${index + 1}: ${photo.caption}`);
+    const image = el('img'); image.src = photo.src; image.alt = ''; image.loading = 'lazy'; image.decoding = 'async';
+    button.append(image); button.addEventListener('click', () => showGalleryPhoto(index)); galleryThumbnails.append(button);
+  });
+  showGalleryPhoto(0, false); showImageDialog(); galleryThumbnails.scrollLeft = 0;
+}
+previousPhoto.addEventListener('click', () => showGalleryPhoto(galleryIndex - 1));
+nextPhoto.addEventListener('click', () => showGalleryPhoto(galleryIndex + 1));
+imageDialog.addEventListener('keydown', event => {
+  if (!galleryPhotos.length) return;
+  let target;
+  if (event.key === 'ArrowLeft') target = galleryIndex - 1;
+  if (event.key === 'ArrowRight') target = galleryIndex + 1;
+  if (event.key === 'Home') target = 0;
+  if (event.key === 'End') target = galleryPhotos.length - 1;
+  if (target != null) { event.preventDefault(); showGalleryPhoto(target); if(event.target.closest('.gallery-thumbnail')) galleryThumbnails.children[galleryIndex]?.focus({preventScroll:true}); }
+});
+let swipeStart = null;
+imageStage.addEventListener('touchstart', event => {
+  const touch = event.touches.length === 1 && !event.target.closest('button') ? event.touches[0] : null;
+  swipeStart = touch ? { x: touch.clientX, y: touch.clientY } : null;
+}, { passive: true });
+imageStage.addEventListener('touchend', event => {
+  if (!swipeStart || !galleryPhotos.length) return;
+  const touch = event.changedTouches[0], dx = touch.clientX - swipeStart.x, dy = touch.clientY - swipeStart.y;
+  swipeStart = null;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.25) showGalleryPhoto(galleryIndex + (dx < 0 ? 1 : -1));
+}, { passive: true });
+imageStage.addEventListener('touchcancel', () => { swipeStart = null; }, { passive: true });
+imageDialog.addEventListener('close', () => { document.documentElement.classList.remove('image-viewer-open'); galleryPhotos = []; swipeStart = null; });
+function albumCard(category, photos) {
+  const article = el('article', 'photo-item album-item');
+  const button = el('button', 'album-card hover-card'); button.type = 'button';
+  button.setAttribute('aria-label', `Buka album ${category.title}, ${photos.length} foto`);
+  const cover = el('span', 'album-cover');
+  const image = el('img'); image.src = photos[0].src; image.alt = photos[0].caption; if(photos[0].id === 'original') image.classList.add('album-portrait'); image.loading = 'lazy'; image.decoding = 'async';
+  const count = el('span', 'album-count', `${photos.length} foto`);
+  const hint = el('span', 'album-cover-hint', 'Buka album ↗');
+  cover.append(image, count, hint);
+  const body = el('span', 'album-info'); const copy = el('span');
+  copy.append(el('span', 'album-title', category.title), el('span', 'album-subtitle', category.subtitle));
+  const arrow = el('span', 'album-open', '↗'); arrow.setAttribute('aria-hidden', 'true'); body.append(copy, arrow);
+  button.append(cover, body); button.addEventListener('click', () => openAlbum(photos, category.title)); article.append(button); return article;
+}
 function renderPhotos() {
-  const grid = $('#photo-grid');
-  grid.replaceChildren();
-  const photos = [{ id: 'original', src: 'assets/portrait.jpeg', caption: 'A face behind the work.', location: 'Dicky Adisaputra', category: 'work' }, ...state.photos.filter(p => p.status !== 'draft')];
-  photos.filter(photo => activeFilter === 'all' || photo.category === activeFilter).forEach(photo => grid.append(photoCard(photo, photo.id === 'original')));
-  if ((activeFilter === 'all' || activeFilter === 'outdoors') && !state.photos.some(p => p.category === 'outdoors' && p.status !== 'draft')) grid.append(placeholder('outdoors'));
-  if ((activeFilter === 'all' || activeFilter === 'work') && !state.photos.some(p => p.category === 'work' && p.status !== 'draft')) grid.append(placeholder('work'));
+  const grid = $('#photo-grid'); grid.classList.add('album-grid'); grid.replaceChildren();
+  const photos = [...state.photos.filter(photo => photo.status === 'published'), { id: 'original', src: 'assets/portrait.jpeg', caption: 'A face behind the work.', location: 'Dicky Adisaputra', category: 'work' }];
+  for (const category of galleryCategories) {
+    if (activeFilter !== 'all' && activeFilter !== category.id) continue;
+    const members = photos.filter(photo => (['work','outdoors'].includes(photo.category) ? photo.category : 'other') === category.id);
+    if (members.length) grid.append(albumCard(category, members));
+  }
+  if (!grid.children.length) {
+    const empty = el('div', 'album-empty'); empty.append(el('span', 'eyebrow', 'A COLLECTION IN THE MAKING'), el('h4', '', 'A few moments, soon.'), el('p', '', 'Foto untuk koleksi ini akan segera hadir.')); grid.append(empty);
+  }
   document.dispatchEvent(new Event('content:rendered'));
 }
 

@@ -57,7 +57,7 @@ function emptyCard(title, description, kind, mark) {
 }
 function renderPhotos() {
   const grid = $('#studio-photo-grid'); grid.replaceChildren();
-  if (filter !== 'outdoors') {
+  if (filter === 'all' || filter === 'work') {
     const original = el('article', 'studio-photo-card');
     const image = el('img', 'studio-thumb'); image.src = '../assets/portrait.jpeg'; image.alt = 'Foto asli Dicky Adisaputra';
     const body = el('div'); const meta = el('div', 'studio-item-meta'); meta.append(el('span', '', 'Work'), badge({ status: 'published' }, 'Foto asli'));
@@ -66,11 +66,12 @@ function renderPhotos() {
   }
   state.photos.filter(photo => filter === 'all' || photo.category === filter).forEach(photo => {
     const card = el('article', 'studio-photo-card'); const image = el('img', 'studio-thumb'); image.src = photo.src; image.alt = photo.caption;
-    const body = el('div'); const meta = el('div', 'studio-item-meta'); meta.append(el('span', '', photo.category === 'work' ? 'Work' : 'Outdoors'), badge(photo));
+    const body = el('div'); const meta = el('div', 'studio-item-meta'); meta.append(el('span', '', ({ work: 'Work', outdoors: 'Outdoors', other: 'Lain-lain' }[photo.category] || 'Lain-lain')), badge(photo));
     body.append(meta, el('h3', '', photo.caption), el('p', 'location', photo.location || 'Tanpa lokasi'), itemActions('photos', photo)); card.append(image, body); grid.append(card);
   });
-  if (!state.photos.some(p => p.category === 'outdoors') && filter !== 'work') grid.append(emptyCard('Mountains & places.', 'Simpan foto gunung dan perjalananmu, lalu pilih yang ingin ditampilkan.', 'photos', '↗'));
-  if (!state.photos.some(p => p.category === 'work') && filter !== 'outdoors') grid.append(emptyCard('A moment from work.', 'Foto profesional, kegiatan, dan momen di balik pekerjaan.', 'photos', '▧'));
+  if (!state.photos.some(p => p.category === 'outdoors') && (filter === 'all' || filter === 'outdoors')) grid.append(emptyCard('Mountains & places.', 'Simpan foto gunung dan perjalananmu, lalu pilih yang ingin ditampilkan.', 'photos', '↗'));
+  if (!state.photos.some(p => p.category === 'work') && (filter === 'all' || filter === 'work')) grid.append(emptyCard('A moment from work.', 'Foto profesional, kegiatan, dan momen di balik pekerjaan.', 'photos', '▧'));
+  if (filter === 'other' && !state.photos.some(photo => photo.category === 'other')) grid.append(emptyCard('Other moments.', 'Momen keseharian dan cerita di luar pekerjaan serta perjalanan.', 'photos', '↗'));
 }
 function renderBooks() {
   const list = $('#studio-book-list'); list.replaceChildren();
@@ -114,7 +115,7 @@ function openEditor(kind, item = null) {
   editing = { kind, item };
   $('#batch-progress').hidden = true; $('#batch-progress').textContent = '';
   $('#photo-single-fields').hidden = false; $('#photo-batch-list').hidden = true;
-  const form = $('#content-form'); form.reset(); $('#editor-error').textContent = ''; $('#studio-file-preview').hidden = true;
+  const form = $('#content-form'); form.reset(); if (kind === 'photos' && !item) form.elements.category.value = ['work','outdoors','other'].includes(filter) ? filter : 'work'; $('#editor-error').textContent = ''; $('#studio-file-preview').hidden = true;
   $('#photo-fields').hidden = kind !== 'photos'; $('#book-fields').hidden = kind !== 'books';
   form.elements.caption.required = kind === 'photos'; form.elements.title.required = form.elements.author.required = kind === 'books'; form.elements.photo.required = kind === 'photos' && !item; form.elements.photo.multiple = !item;
   $('#editor-title').textContent = (item ? 'Edit ' : 'Tambah ') + (kind === 'photos' ? 'foto.' : 'buku.');
@@ -163,7 +164,7 @@ function renderPhotoQueue() {
     top.append(remove); body.append(top);
     const captionLabel = el('label', '', 'Keterangan foto'); const caption = el('input'); caption.value = entry.caption; caption.maxLength = 120; caption.required = true; caption.setAttribute('aria-label', 'Keterangan ' + entry.file.name); caption.addEventListener('input', () => entry.caption = caption.value); captionLabel.append(caption); body.append(captionLabel);
     const fields = el('div', 'form-grid'); const categoryLabel = el('label', '', 'Koleksi'); const category = el('select');
-    for (const [value, text] of [['work','Work — profesional'],['outdoors','Outdoors — gunung & perjalanan']]) { const option = el('option', '', text); option.value = value; category.append(option); }
+    for (const [value, text] of [['work','Work — profesional'],['outdoors','Outdoors — gunung & perjalanan'],['other','Lain-lain — keseharian']]) { const option = el('option', '', text); option.value = value; category.append(option); }
     category.value = entry.category; category.addEventListener('change', () => entry.category = category.value); categoryLabel.append(category);
     const locationLabel = el('label', '', 'Lokasi (opsional)'); const location = el('input'); location.value = entry.location; location.maxLength = 80; location.addEventListener('input', () => entry.location = location.value); locationLabel.append(location);
     fields.append(categoryLabel, locationLabel); body.append(fields, el('p', 'queue-state', entry.saved ? 'Tersimpan ✓' : entry.error || 'Siap diunggah')); row.append(image, body); list.append(row);
