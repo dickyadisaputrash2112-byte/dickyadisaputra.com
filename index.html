@@ -554,7 +554,7 @@ a.bk:hover{background:#f7f7f6}
   const entry = (lg, name, role, text, link) => `<div class="entry">${lg}<div><span class="nm">${name}</span><div class="role">${role}</div>${text ? `<p class="noind">${text}</p>` : ''}${link ? `<a class="lnk" href="https://${link}" target="_blank" rel="noopener">${link} →</a>` : ''}</div></div>`;
   const GREEN = 'linear-gradient(160deg,#eef6f1,#cfe5d8)', BLUE = 'linear-gradient(160deg,#f1f5ff,#d6e1fb)';
   const S = [
-    { id: 'now', title: 'Now', sub: 'Operating, building, advising', av: ['#79c2c4', '#22385a'], board: '#22385a', pic: { photo: '0lrpNScIBp4', fb: { art: 'now', bg: '#f3ece2' } },
+    { id: 'now', title: 'Now', sub: 'Operating, building, advising', av: ['#79c2c4', '#22385a'], board: '#22385a', pic: { img: '/assets/room/ph-now.webp' },
       pages: () => [
         chapter('Bab Satu', 'Now', 'A mix of operating, building, advising, and learning.', `Bogor, Indonesia · ${YEAR}`),
         `<div class="pc"><span class="sc center">Di meja saat ini</span><h2 class="t2 center">Four places, one desk.</h2>
@@ -573,7 +573,7 @@ a.bk:hover{background:#f7f7f6}
           <p class="drop">Helping training institutions across Indonesia prepare licensing, institutional requirements, and related compliance documentation.</p>
           <div class="orn" style="margin:1.2em 0 .6em">◆</div><span class="sc center">Selected clients</span><div class="clients"><div>PT Dayaguna Kompetensi Nusantara</div><div>PT Esemvo Mentari Kreatif</div><div>PT Alifia Alice Indonesia</div><div>LPK Reka Kreasi</div></div></div>`
       ] },
-    { id: 'past', title: 'Journey', sub: 'Evermos · Global Ultima Talenta', av: ['#f0b23a', '#e5662f'], board: '#7a4a2a', pic: { photo: 'voIymZpKl4A', fb: { art: 'past', bg: '#f7f1e6' } },
+    { id: 'past', title: 'Journey', sub: 'Evermos · Global Ultima Talenta', av: ['#f0b23a', '#e5662f'], board: '#7a4a2a', pic: { img: '/assets/room/ph-journey.webp' },
       pages: () => [
         chapter('Bab Dua', 'A few chapters <em>before</em>', 'Roles that shaped how I think about learning, people, systems, and execution.'),
         `<div class="pc"><span class="sc center">Bagian pertama</span><h2 class="t2 center">Learning, by design.</h2><div class="tl">
@@ -604,7 +604,7 @@ a.bk:hover{background:#f7f7f6}
         `<div class="pc"><span class="sc center">Dari perpustakaannya</span><h2 class="t2 center">Open books on the shelf.</h2><div class="minis"><span class="mini-b" style="--c:#e5662f">Principles of Marketing</span><span class="mini-b" style="--c:#22385a">Introduction to Business 2e</span><span class="mini-b" style="--c:#9cbfa0">Psychology 2e</span></div>
           <p class="it center muted">Daftar lengkapnya ada di rak buku, di samping meja.</p><a class="lnk center mt-auto" href="/ruang-tumbuh/" target="_blank" rel="noopener">Buka Ruang Tumbuh →</a></div>`
       ] },
-    { id: 'writing', title: 'Writing', sub: 'Notes & reflections', av: ['#22385a', '#6e4b3a'], board: '#3a2a22', pic: { photo: '5VplEcYvMrE', fb: { art: 'writing', bg: '#f5ede1' } },
+    { id: 'writing', title: 'Writing', sub: 'Notes & reflections', av: ['#22385a', '#6e4b3a'], board: '#3a2a22', pic: { img: '/assets/room/ph-writing.webp' },
       pages: () => [
         chapter('Bab Empat', 'Notes &amp; <em>reflections</em>', 'Things I’m thinking about — work, learning, faith, business, and life.'),
         `<div class="pc"><span class="sc center">Daftar isi</span><h2 class="t2 center">Latest writing.</h2><div class="toc">${tocRows()}</div></div>`,
@@ -614,21 +614,21 @@ a.bk:hover{background:#f7f7f6}
           ${entry('', 'Belajar Menjadi Ayah', 'Koleksi pribadi', 'Tulisan dan bacaan tentang keluarga dan tanggung jawab.')}</div>`,
         `<div class="pc ch"><span class="sc">Lanjut membaca</span><div class="hair"></div><p class="epi">Beberapa tulisan terbuka untuk semua orang; beberapa terkunci untuk pembaca yang menerima password.</p><div class="orn">◆</div><a class="lnk" href="/writing/" target="_blank" rel="noopener">Semua tulisan →</a></div>`
       ] },
-    { id: 'ayah', title: 'Belajar Menjadi Ayah', sub: 'Life & family', av: ['#e5662f', '#b55a2d'], board: '#8a3f22', pic: { photo: 'JJ9irt1OZmI', fb: { typo: 'Belajar<br>Menjadi<br><em>Ayah.</em>' } },
+    { id: 'ayah', title: 'Belajar Menjadi Ayah', sub: 'Life & family', av: ['#e5662f', '#b55a2d'], board: '#8a3f22', pic: { img: '/assets/room/ph-ayah.webp' },
       pages: () => [
         chapter('Koleksi Pribadi', 'Belajar Menjadi <em>Ayah</em>', 'Tulisan, bacaan, dan hal-hal yang kupelajari.'),
         `<div class="pc" style="justify-content:center"><p class="drop">Tulisan dan bacaan tentang keluarga, tanggung jawab, relasi, dan belajar menjadi ayah sebelum menjalaninya.</p><div class="orn">◆</div><p class="center it" style="font-size:1.6em;line-height:1.25;text-align:center">Read.<br>Reflect.<br>Write.</p></div>`,
         `<div class="pc"><span class="sc center">Tema</span><h2 class="t2 center">What this collection holds.</h2><div class="list-dash"><div><span>i.</span><span>Faith</span></div><div><span>ii.</span><span>Relationships</span></div><div><span>iii.</span><span>Family &amp; responsibility</span></div><div><span>iv.</span><span>Readings worth keeping</span></div></div></div>`,
         `<div class="pc ch"><span class="sc">Sedang bertumbuh</span><div class="hair"></div><p class="epi">Koleksi ini sedang bertumbuh. Temukan catatan terbaru di halaman Writing.</p><div class="orn">◆</div><a class="lnk" href="/writing/" target="_blank" rel="noopener">Ke halaman Writing →</a></div>`
       ] },
-    { id: 'moments', title: 'Moments', sub: 'Work, mountains & places', av: ['#9cbfa0', '#22385a'], board: '#2f4a3a', pic: { photo: '7hww7t6NLcg', fb: { art: 'moments', bg: '#e3eee7' } },
+    { id: 'moments', title: 'Moments', sub: 'Work, mountains & places', av: ['#9cbfa0', '#22385a'], board: '#2f4a3a', pic: { img: '/assets/room/ph-moments.webp' },
       pages: () => [
         chapter('Bab Lima', 'The person <em>in between</em>', 'Some days at a desk. Some days, a little further out.'),
         `<div class="pc"><span class="sc center">Album</span><div class="album">${albumHTML()}</div></div>`,
         `<div class="pc"><span class="sc center">Di luar kerja</span><h2 class="t2 center">Work, mountains &amp; places.</h2><p class="drop">Koleksi foto dari berbagai sisi hidupku — tiga album yang terus bertambah: Work, Outdoors, dan Lain-lain.</p><div class="orn">◆</div>${entry('', 'Books', 'Buku yang sudah kubaca', 'Dengan satu hal yang kubawa pulang — lihat rak di samping meja.')}</div>`,
         `<div class="pc ch"><span class="sc">Catatan</span><div class="hair"></div><h1 style="font-size:2em">A face behind the work.</h1><p class="epi">Foto album diambil langsung dari koleksi di Studio. Bingkai kosong akan terisi saat foto dipublikasikan.</p><div class="orn">◆</div></div>`
       ] },
-    { id: 'contact', title: 'Let’s talk', sub: 'hello@dickyadisaputra.com', av: ['#f0a3b2', '#c96a83'], board: '#7a3a4a', pic: { photo: 'zsJAvgb-gQ4', fb: { art: 'contact', bg: '#f7e4e4' } },
+    { id: 'contact', title: 'Let’s talk', sub: 'hello@dickyadisaputra.com', av: ['#f0a3b2', '#c96a83'], board: '#7a3a4a', pic: { img: '/assets/room/ph-talk.webp' },
       pages: () => [
         `<div class="pc letter"><p class="it muted" style="text-align:right!important">Bogor, ${new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date())}</p><p style="margin-top:1.6em!important">Halo,</p><p>Untuk kerja, kolaborasi, ide, atau sekadar obrolan yang berguna — pintunya selalu terbuka.</p><p>Kirim saja surel. Saya membalas dari Bogor, di zona waktu GMT+7.</p><p style="margin-top:1.6em!important">Salam hangat,</p><div class="sig">Dicky</div></div>`,
         `<div class="pc env"><div class="stamp">Bogor<b data-clock>--:--</b>WIB · GMT+7</div><div class="addr"><span class="sc">Kepada</span><b>hello@dickyadisaputra.com</b><p class="it muted noind" style="margin-top:.3em">Bogor, Indonesia</p></div><a class="lnk" href="mailto:hello@dickyadisaputra.com">Tulis surel →</a></div>`
@@ -662,7 +662,7 @@ a.bk:hover{background:#f7f7f6}
     ['Vaccaro, M., Almaatouq, A., & Malone, T.', '2024', 'When combinations of humans and AI are useful: A systematic review and meta-analysis', 'Nature Human Behaviour', 'https://doi.org/10.1038/s41562-024-02024-1']
   ];
   const ref = r => `<p class="ref">${esc(r[0])} (${r[1]}). <i>${esc(r[2])}</i>. ${esc(r[3])}. <a href="${r[4]}" target="_blank" rel="noopener">${r[4].replace('https://', '')}</a></p>`;
-  const SHELF = { id: 'shelf', title: 'Rak Buku', sub: 'Kurasi', av: ['#6e4b3a', '#22385a'], board: '#4a3424', pic: { photo: 'RH-WY45Y0l0', fb: { img: IMG.tumbuh } },
+  const SHELF = { id: 'shelf', title: 'Rak Buku', sub: 'Kurasi', av: ['#6e4b3a', '#22385a'], board: '#4a3424', pic: { img: IMG.tumbuh },
     pages: () => [
       chapter('Rak Buku · Kurasi', 'Books that <em>stayed</em> with me', 'Buku yang kubaca, dan bacaan yang kukurasi untuk Ruang Tumbuh.'),
       `<div class="pc"><span class="sc center">Koleksi Books</span><h2 class="t2 center">Read &amp; kept.</h2>${data.books.length ? data.books.slice(0, 6).map((b, i) => `<div class="bk2"><span class="mini-b" style="--c:${PAL[i % PAL.length]}">${esc(b.title)}</span><span><b>${esc(b.title)}</b><small>${esc(b.author || '')}</small>${b.takeaway ? `<p class="it noind" style="margin-top:.25em!important;font-size:.85em">“${esc(b.takeaway)}”</p>` : ''}</span></div>`).join('') : `<p class="drop">Buku yang sudah kubaca, dan hal-hal yang tetap tinggal setelah halaman terakhir.</p><p class="it muted center" style="margin-top:1em!important;text-indent:0">Koleksi ini diisi dari Studio dan akan segera hadir.</p>`}</div>`,
@@ -817,14 +817,14 @@ a.bk:hover{background:#f7f7f6}
     { t: 'Belajar Marketing, Belajar Hidup', a: 'Henry Manampiring', c: '#5f7fa8', img: '/assets/room/cv-bmbh.webp', th: .1 },
     { t: 'Mengukir Peradaban', a: 'Fahmi Zahra', c: '#9cc3ba', ct: '#24413b', img: '/assets/room/cv-mp.webp', th: .09 },
     { t: 'Rumah', a: 'J.S. Khairen', c: '#d9b98c', ct: '#4a2c1c', img: '/assets/room/cv-rumah.webp', th: .11 },
-    { t: 'Seorang Pria yang Melalui Duka dengan Mencuci Piring', a: 'Andreas Kurniawan', c: '#ebe6da', ct: '#2a2622', g: 'revoEAAAQBAJ', th: .09 },
-    { t: 'Sirah Nabawiyah', a: 'Syaikh Shafiyyurrahman al-Mubarakfuri', c: '#5f9479', g: '_2_uDAAAQBAJ', th: .15 },
+    { t: 'Seorang Pria yang Melalui Duka dengan Mencuci Piring', a: 'Andreas Kurniawan', c: '#ebe6da', ct: '#2a2622', g: 'revoEAAAQBAJ', img: '/assets/room/bk-revo.webp', th: .09 },
+    { t: 'Sirah Nabawiyah', a: 'Syaikh Shafiyyurrahman al-Mubarakfuri', c: '#5f9479', g: '_2_uDAAAQBAJ', img: '/assets/room/bk-sirah.webp', th: .15 },
     { t: 'The Book You Wish Your Parents Had Read', a: 'Philippa Perry', c: '#f2c75e', ct: '#2a2622', g: '_p5RvgAACAAJ', th: .1 },
-    { t: 'The Opposite of Spoiled', a: 'Ron Lieber', c: '#e8e3d6', ct: '#2a2622', g: 'yfI2BAAAQBAJ', th: .1 },
-    { t: 'Perawan Remaja dalam Cengkeraman Militer', a: 'Pramoedya Ananta Toer', c: '#b8665a', g: 'tSM_FDM7160C', th: .1 },
+    { t: 'The Opposite of Spoiled', a: 'Ron Lieber', c: '#e8e3d6', ct: '#2a2622', g: 'yfI2BAAAQBAJ', img: '/assets/room/bk-spoiled.webp', th: .1 },
+    { t: 'Perawan Remaja dalam Cengkeraman Militer', a: 'Pramoedya Ananta Toer', c: '#b8665a', g: 'tSM_FDM7160C', img: '/assets/room/bk-perawan.webp', th: .1 },
     { t: 'Me & My Half Dien', a: 'Abu Bassam Oemar Mita', c: '#dfe2d0', ct: '#3f332b', img: '/assets/room/cv-mmhd.webp', th: .1 },
-    { t: 'Building a StoryBrand', a: 'Donald Miller', c: '#f4f1ea', ct: '#1b2a3a', g: 'b3xDDgAAQBAJ', th: .1 },
-    { t: 'The Psychology of Selling', a: 'Brian Tracy', c: '#5a7db0', g: 'cn0rZCagppEC', th: .1 },
+    { t: 'Building a StoryBrand', a: 'Donald Miller', c: '#f4f1ea', ct: '#1b2a3a', g: 'b3xDDgAAQBAJ', img: '/assets/room/bk-storybrand.webp', th: .1 },
+    { t: 'The Psychology of Selling', a: 'Brian Tracy', c: '#5a7db0', g: 'cn0rZCagppEC', img: '/assets/room/bk-selling.webp', th: .1 },
     { t: 'Teruslah Bodoh Jangan Pintar', a: 'Tere Liye', c: '#6b6e75', g: 'p7M7EQAAQBAJ', th: .13 },
     { t: 'Tentang Kamu', a: 'Tere Liye', c: '#86a9bd', g: 'VQHvzgEACAAJ', th: .13 },
     { t: "Reconnect with Qur'an", a: 'Ibrahim As-Sakran', c: '#4f8580', img: '/assets/room/cv-rwq.webp', th: .09 },
@@ -838,7 +838,7 @@ a.bk:hover{background:#f7f7f6}
   function buildFavs() {
     if (built) return; built = true;
     const all = [...FAVS, ...data.books.filter(d => !FAVS.some(f => f.t.toLowerCase() === String(d.title).toLowerCase())).map((d, i) => ({ t: d.title, a: d.author || '', c: PAL[i % PAL.length], th: .1, img: /^https:\/\//.test(d.cover || '') ? d.cover : '' }))];
-    row.innerHTML = all.map((b, i) => `<div class="bk3" role="button" tabindex="0" data-i="${i}" aria-label="${esc(b.t)}${b.a ? ' — ' + esc(b.a) : ''}" style="--c:${b.c};--ct:${b.ct || '#fff'};--t:${b.th}"><div class="box"><div class="f">${gcover(b)}${b.g || b.img ? `<img src="${b.img || coverImg(b)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-cover="1" style="opacity:0;position:absolute;inset:0">` : ''}</div><div class="s"><b>${esc(b.t)}</b><small>${esc(b.a.split(' ').slice(-1)[0] || '')}</small></div><div class="pgs"></div><div class="bk"></div></div></div>`).join('');
+    row.innerHTML = all.map((b, i) => `<div class="bk3" role="button" tabindex="0" data-i="${i}" aria-label="${esc(b.t)}${b.a ? ' — ' + esc(b.a) : ''}" style="--c:${b.c};--ct:${b.ct || '#fff'};--t:${b.th}"><div class="box"><div class="f">${gcover(b)}${b.img ? `<img src="${b.img}" alt="" loading="lazy" referrerpolicy="no-referrer" data-cover="1" style="opacity:0;position:absolute;inset:0">` : ''}</div><div class="s"><b>${esc(b.t)}</b><small>${esc(b.a.split(' ').slice(-1)[0] || '')}</small></div><div class="pgs"></div><div class="bk"></div></div></div>`).join('');
     row._all = all;
   }
   document.addEventListener('load', e => { const im = e.target; if (im.tagName === 'IMG' && im.dataset.cover) { if (im.naturalWidth > 60) { im.style.opacity = 1; im.previousElementSibling?.remove(); } else im.remove(); } }, true);
