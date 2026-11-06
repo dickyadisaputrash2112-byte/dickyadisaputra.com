@@ -368,6 +368,20 @@ a.bk:hover{background:#f7f7f6}
 .addr{border-top:1px solid #ddd4c4;padding-top:1em}
 .addr b{display:block;font:400 1.4em/1.2 var(--serif);word-break:break-word;margin-top:.2em}
 
+
+.vids{display:grid;grid-template-columns:1fr 1fr;gap:.7em .6em}
+.vid{display:flex;flex-direction:column;gap:.3em}
+.vth{position:relative;display:block;border-radius:.25em;overflow:hidden;box-shadow:0 0 0 1px #e2dacb}
+.vth img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.vth i{position:absolute;right:.35em;bottom:.35em;width:1.6em;height:1.6em;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-style:normal;font-size:.62em;display:grid;place-items:center}
+.vt{font-size:.66em;line-height:1.3;color:#4a443c}
+.vid:hover .vt{color:var(--acc,#8a5a3a)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:.6em;margin:.8em 0 .9em;flex:1;min-height:0}
+.duo figure{margin:0;border-radius:.25em;overflow:hidden;box-shadow:0 0 0 1px #e2dacb,0 .8em 1.4em -1em rgba(0,0,0,.4)}
+.duo img{width:100%;height:100%;object-fit:cover;display:block}
+.fig-n{font-style:normal;letter-spacing:.12em;text-transform:uppercase;font-size:.8em;font-weight:500;color:var(--acc,#8a5a3a);margin-right:.4em}
+.fig .frame img.photo{width:100%;height:100%;object-fit:cover;border-radius:.3em;box-shadow:0 0 0 1px #e2dacb,0 1em 2em -1.2em rgba(0,0,0,.35)}
+.card .pic img[src*="/me-"],.cv .p img[src*="/me-"]{object-position:center 38%}
 /* bibliography */
 .ref{padding-left:1.6em;text-indent:-1.6em!important;margin:0 0 .75em!important;font-size:.84em!important;line-height:1.45!important;text-align:left!important}
 .ref a{color:var(--acc,#8a5a3a);word-break:break-all;font-style:italic}
@@ -399,6 +413,48 @@ a.bk:hover{background:#f7f7f6}
   *,*:before,*:after{animation:none!important;transition:none!important}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
 }
+/* ===== desk music player ===== */
+.desk-player{position:absolute;left:16.5%;bottom:78.4%;z-index:4;pointer-events:auto;cursor:pointer;--lv:0;--bass:0;outline:none;-webkit-tap-highlight-color:transparent}
+.desk-player:focus-visible{outline:2px solid #e5662f;outline-offset:.6cqw;border-radius:1cqw}
+.desk-player{width:15cqw}
+.desk-player .pv{display:none;position:relative;margin:0 auto}
+.desk-player .pv-b{display:block}
+.desk-player .tip{position:absolute;left:50%;bottom:calc(100% + 1.2cqw);transform:translateX(-50%) translateY(.4cqw);white-space:nowrap;font:500 max(9px,1.05cqw)/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:#fff;background:#25272b;padding:.7cqw 1cqw;border-radius:99px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.desk-player:hover .tip,.desk-player:focus-visible .tip{opacity:1;transform:translateX(-50%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1.8s linear infinite;animation-play-state:paused}
+.playing .spin{animation-play-state:running}
+
+/* B — boombox */
+.pv-b{width:16cqw;height:9cqw}
+.bb-handle{position:absolute;left:22%;right:22%;top:0;height:2.4cqw;border:.5cqw solid #3b3d42;border-bottom:0;border-radius:1.2cqw 1.2cqw 0 0}
+.bb-body{position:absolute;left:0;right:0;bottom:0;height:6.8cqw;border-radius:.8cqw;background:linear-gradient(#f2efe9,#dcd6cb);box-shadow:inset 0 .15cqw 0 #fff,0 1.2cqw 1.6cqw -1cqw rgba(0,0,0,.45);display:flex;align-items:center;justify-content:space-between;padding:0 .7cqw}
+.spk{width:4.4cqw;height:4.4cqw;border-radius:50%;background:radial-gradient(circle,#4a4c51 0 20%,#2c2d30 21% 60%,#45474c 61% 66%,#2c2d30 67%);box-shadow:0 0 0 .3cqw #c9c2b6;display:grid;place-items:center;transform:scale(calc(1 + var(--bass) * .1));transition:transform .06s}
+.spk i{width:30%;height:30%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6a6c72,#2c2d30)}
+.bb-mid{flex:1;margin:0 .6cqw;display:flex;flex-direction:column;align-items:center;gap:.5cqw}
+.tape{width:100%;height:2.6cqw;border-radius:.3cqw;background:#2c2d30;box-shadow:inset 0 0 0 .2cqw #4a4c51;display:flex;align-items:center;justify-content:space-around;padding:0 .5cqw}
+.reel{width:1.6cqw;height:1.6cqw;border-radius:50%;background:repeating-conic-gradient(#f2efe9 0 18deg,#2c2d30 18deg 60deg);box-shadow:0 0 0 .25cqw #e5662f}
+.meter{display:flex;gap:.25cqw;align-items:flex-end;height:1.6cqw}
+.meter b{width:.45cqw;border-radius:.1cqw;background:#e5662f;height:calc(12% + var(--lv) * var(--k) * 100%);max-height:100%;transition:height .06s}
+.meter b:nth-child(1){--k:.55}.meter b:nth-child(2){--k:.9}.meter b:nth-child(3){--k:1.1}.meter b:nth-child(4){--k:.8}.meter b:nth-child(5){--k:.5}
+
+/* now-playing chip */
+.np{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:8px 14px 8px 8px;border-radius:99px;background:rgba(255,255,255,.75);box-shadow:0 6px 18px -12px rgba(0,0,0,.35);font:500 12px/1 var(--sans);color:#25272b;transition:background .2s}
+.np:hover{background:#fff}
+.np-ico{width:26px;height:26px;border-radius:50%;background:#25272b;color:#fff;display:grid;place-items:center;font-size:10px}
+.np-t{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-eq{display:flex;gap:2px;align-items:flex-end;height:12px}
+.np-eq i{width:3px;border-radius:1px;background:#e5662f;height:calc(20% + var(--lv,0) * var(--k) * 100%);max-height:100%}
+.np-eq i:nth-child(1){--k:.7}.np-eq i:nth-child(2){--k:1.1}.np-eq i:nth-child(3){--k:.85}
+.music-hint{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);z-index:60;background:#25272b;color:#fff;font:500 13px/1 var(--sans);padding:12px 16px;border-radius:99px;opacity:0;transition:opacity .4s,transform .4s;pointer-events:none;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
+.music-hint.show{opacity:1;transform:translate(-50%,0)}
+@container (max-width:420px){.desk-player{left:15%;transform:scale(1.35);transform-origin:50% 100%}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none!important}.spk{transition:none}}
+.np-next{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#25272b;background:#f1f1ef;margin-left:2px}
+.np-next:hover{background:#e6e6e3}
+.np-wrap{display:inline-flex;align-items:center;gap:6px;margin-top:14px}
+.np-wrap .np{margin-top:0}
+
 </style>
 </head>
 <body>
@@ -428,10 +484,15 @@ a.bk:hover{background:#f7f7f6}
     <h1>Dicky Adisaputra</h1>
     <p>Program Builder &amp; Consultant · Work, Projects, Life</p>
     <span class="mono now" id="now">Sekarang · COO, Campus Innovate</span>
+    <div class="np-wrap"><button class="np" id="np" aria-pressed="false"><span class="np-ico">▶</span><span class="np-t">Musik</span><span class="np-eq" aria-hidden="true"><i></i><i></i><i></i></span></button><button class="np-next" id="np-next" aria-label="Lagu berikutnya" title="Lagu berikutnya">⏭</button></div>
   </div>
   <div class="desk">
     <div class="desk-cal" id="desk-cal" role="img" aria-label="Kalender"><span class="dc-ring"></span><span class="dc-day" id="dc-day">—</span><b id="dc-date">–</b><span class="dc-mon" id="dc-mon">—</span><span class="dc-wx" id="dc-wx">Bogor</span></div>
     <div class="desk-clock" id="desk-clock" role="img" aria-label="Jam Bogor"><div class="dk-face"><i class="dk-h" id="dk-h"></i><i class="dk-m" id="dk-m"></i><i class="dk-s" id="dk-s"></i><span class="dk-pin"></span></div><span class="dk-foot"></span></div>
+    <div class="desk-player" id="player" role="button" tabindex="0" aria-label="Putar musik">
+      <span class="tip">▶ Putar</span>
+      <div class="pv pv-b" aria-hidden="true"><span class="bb-handle"></span><div class="bb-body"><span class="spk"><i></i></span><div class="bb-mid"><div class="tape"><i class="reel spin"></i><i class="reel spin"></i></div><div class="meter"><b></b><b></b><b></b><b></b><b></b></div></div><span class="spk"><i></i></span></div></div>
+    </div>
     <svg viewBox="0 0 640 300" aria-hidden="true">
       <defs>
         <linearGradient id="top" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fdfdfd"/><stop offset="1" stop-color="#ececeb"/></linearGradient>
@@ -458,14 +519,14 @@ a.bk:hover{background:#f7f7f6}
         <path d="M14 62h34l-4 18H18z" fill="url(#pot)"/>
       </g>
       <!-- mug -->
-      <g transform="translate(150 50)">
+      <g transform="translate(214 50)">
         <path class="steam" d="M10 8q-4-6 0-12" stroke="#bdbdbb" stroke-width="2" fill="none" stroke-linecap="round"/>
         <path class="steam b" d="M18 8q4-6 0-12" stroke="#bdbdbb" stroke-width="2" fill="none" stroke-linecap="round"/>
         <rect x="4" y="12" width="20" height="18" rx="3" fill="#25272b"/>
         <path d="M24 16h4a4 4 0 0 1 0 8h-4" stroke="#25272b" stroke-width="3" fill="none"/>
       </g>
       <!-- notebook -->
-      <g transform="translate(205 70)"><rect width="74" height="10" rx="1.5" fill="#e5662f"/><rect y="-6" width="64" height="7" rx="1.5" fill="#79c2c4"/></g>
+      <g transform="translate(116 70)"><rect width="74" height="10" rx="1.5" fill="#e5662f"/><rect y="-6" width="64" height="7" rx="1.5" fill="#79c2c4"/></g>
       <!-- chair -->
       <g>
         <path d="M262 110c0-24 26-36 58-36s58 12 58 36l-6 76c-2 14-22 20-52 20s-50-6-52-20z" fill="url(#seat)"/>
@@ -488,6 +549,7 @@ a.bk:hover{background:#f7f7f6}
 
 </main>
 
+<div class="music-hint" id="music-hint" role="status">♪ Ketuk di mana saja untuk memutar musik</div>
 <div class="favs" id="favs" hidden role="dialog" aria-modal="true" aria-label="Favorite books">
   <div class="fv-top"><span class="mono">Rak buku · sudah dibaca</span><button class="close" id="fv-close" aria-label="Tutup rak">×</button></div>
   <div class="fv-stage" id="fv-stage"><div class="fv-head">Favorite Books</div><div class="fv-row" id="fv-row"></div><div class="fv-shelf" aria-hidden="true"></div>
@@ -554,7 +616,7 @@ a.bk:hover{background:#f7f7f6}
   const entry = (lg, name, role, text, link) => `<div class="entry">${lg}<div><span class="nm">${name}</span><div class="role">${role}</div>${text ? `<p class="noind">${text}</p>` : ''}${link ? `<a class="lnk" href="https://${link}" target="_blank" rel="noopener">${link} →</a>` : ''}</div></div>`;
   const GREEN = 'linear-gradient(160deg,#eef6f1,#cfe5d8)', BLUE = 'linear-gradient(160deg,#f1f5ff,#d6e1fb)';
   const S = [
-    { id: 'now', title: 'Now', sub: 'Operating, building, advising', av: ['#79c2c4', '#22385a'], board: '#22385a', pic: { img: '/assets/room/ph-now.webp' },
+    { id: 'now', title: 'Now', sub: 'Operating, building, advising', av: ['#79c2c4', '#22385a'], board: '#22385a', pic: { img: '/assets/room/me-work.webp' },
       pages: () => [
         chapter('Bab Satu', 'Now', 'A mix of operating, building, advising, and learning.', `Bogor, Indonesia · ${YEAR}`),
         `<div class="pc"><span class="sc center">Di meja saat ini</span><h2 class="t2 center">Four places, one desk.</h2>
@@ -573,16 +635,19 @@ a.bk:hover{background:#f7f7f6}
           <p class="drop">Helping training institutions across Indonesia prepare licensing, institutional requirements, and related compliance documentation.</p>
           <div class="orn" style="margin:1.2em 0 .6em">◆</div><span class="sc center">Selected clients</span><div class="clients"><div>PT Dayaguna Kompetensi Nusantara</div><div>PT Esemvo Mentari Kreatif</div><div>PT Alifia Alice Indonesia</div><div>LPK Reka Kreasi</div></div></div>`
       ] },
-    { id: 'past', title: 'Journey', sub: 'Evermos · Global Ultima Talenta', av: ['#f0b23a', '#e5662f'], board: '#7a4a2a', pic: { img: '/assets/room/ph-journey.webp' },
+    { id: 'past', title: 'Journey', sub: 'Evermos · Global Ultima Talenta', av: ['#f0b23a', '#e5662f'], board: '#7a4a2a', pic: { img: '/assets/room/me-train.webp' },
       pages: () => [
         chapter('Bab Dua', 'A few chapters <em>before</em>', 'Roles that shaped how I think about learning, people, systems, and execution.'),
         `<div class="pc"><span class="sc center">Bagian pertama</span><h2 class="t2 center">Learning, by design.</h2><div class="tl">
           <div class="tl-i">${L.evermos()}<span class="entry"><span><span class="nm">Evermos</span><div class="role">Training Strategy &amp; Program Specialist</div></span></span><p class="noind">Designed and improved training programs using participation data, learner behavior, and program evaluation.</p></div>
           <div class="tl-i">${L.gut()}<span class="entry"><span><span class="nm">Global Ultima Talenta</span><div class="role">Head of LSP</div></span></span><p class="noind">Led competency certification operations, assessor coordination, certification delivery, and institutional management.</p></div></div></div>`,
+        `<div class="pc"><span class="sc center">Di depan kamera · Evermos</span><h2 class="t2 center">Teaching, on video.</h2><div class="vids">${[['kQSS9RLsg-M','Kesempatan jualan tanpa modal, untung gede-gedean!'],['zr7ONrHJQmY','Tutorial beli produk digital di aplikasi Evermos'],['fm4hI6rlhNs','Dapetin untung berlipat-lipat tiap bulan'],['NJ1BWuias_4','Cara bayar via transfer bank di aplikasi Evermos'],['UTYgt9UHdQw','Trik rahasia: ubah komisi dari recehan jadi ratusan ribu'],['SPfr6Gwi4p0','Cara maksimalin keuntungan jualan pakai voucher Evermos']].map(v => `<a class="vid" href="https://youtu.be/${v[0]}" target="_blank" rel="noopener"><span class="vth"><img src="/assets/room/yt-${v[0]}.webp" alt="" loading="lazy"><i>▶</i></span><span class="vt">${esc(v[1])}</span></a>`).join('')}</div><p class="it center muted mt-auto" style="font-size:.84em">Video edukasi untuk reseller Evermos — tonton di YouTube.</p></div>`,
+        `<div class="pc"><span class="sc center">Di kelas · Global Ultima Talenta</span><div class="duo"><figure><img src="/assets/room/me-teach.webp" alt="Dicky memfasilitasi kelas pelatihan"></figure><figure><img src="/assets/room/me-assess.webp" alt="Dicky dalam sesi uji kompetensi"></figure></div><p class="it center muted" style="font-size:.86em"><b class="fig-n">Gambar 3–4</b> Memfasilitasi kelas, dan sesi uji kompetensi di Global Ultima Talenta.</p></div>`,
         `<div class="pc"><span class="sc center">Bagian kedua</span><h2 class="t2 center">Building from the ground.</h2><div class="tl">
           <div class="tl-i">${L.gut()}<span class="entry"><span><span class="nm">Global Ultima Talenta</span><div class="role">Corporate Secretary</div></span></span><p class="noind">Administration, partnerships, training operations, legal documentation, and organizational coordination.</p></div>
           <div class="tl-i">${L.djapus()}<span class="entry"><span><span class="nm">Djapus</span><div class="role">Co-Founder</div></span></span><p class="noind">PT Distributor Jajanan Kampus, a campus-focused snack distribution business.</p></div>
           <div class="tl-i">${L.kj()}<span class="entry"><span><span class="nm">Kelas Jawara</span><div class="role">Training Facilitator · Meta Ads</div></span></span><p class="noind">Facilitated Meta Ads learning sessions for business and marketing participants.</p></div></div></div>`,
+        `<div class="pc"><figure class="fig"><div class="frame"><img class="photo" src="/assets/room/me-kj.webp" alt="Private class Facebook, Instagram dan TikTok Ads di Kelas Jawara"></div><figcaption><b>Gambar 5</b>Private class Facebook, Instagram &amp; TikTok Ads bersama Kelas Jawara.</figcaption></figure></div>`,
         `<div class="pc"><span class="sc center">Credentials</span><h2 class="t2 center">A foundation to build on.</h2><div class="seals">
           <div class="seal"><i>BNSP</i><b>Marketing</b></div><div class="seal"><i>BNSP</i><b>Digital Marketing</b></div><div class="seal"><i>BNSP</i><b>Trainer Level 4</b></div><div class="seal"><i>BNSP</i><b>Competency Assessor</b></div></div>
           <p class="it center muted mt-auto" style="font-size:.88em">Competency certifications issued through Indonesia’s national professional certification system.</p></div>`
@@ -621,7 +686,7 @@ a.bk:hover{background:#f7f7f6}
         `<div class="pc"><span class="sc center">Tema</span><h2 class="t2 center">What this collection holds.</h2><div class="list-dash"><div><span>i.</span><span>Faith</span></div><div><span>ii.</span><span>Relationships</span></div><div><span>iii.</span><span>Family &amp; responsibility</span></div><div><span>iv.</span><span>Readings worth keeping</span></div></div></div>`,
         `<div class="pc ch"><span class="sc">Sedang bertumbuh</span><div class="hair"></div><p class="epi">Koleksi ini sedang bertumbuh. Temukan catatan terbaru di halaman Writing.</p><div class="orn">◆</div><a class="lnk" href="/writing/" target="_blank" rel="noopener">Ke halaman Writing →</a></div>`
       ] },
-    { id: 'moments', title: 'Moments', sub: 'Work, mountains & places', av: ['#9cbfa0', '#22385a'], board: '#2f4a3a', pic: { img: '/assets/room/ph-moments.webp' },
+    { id: 'moments', title: 'Moments', sub: 'Work, mountains & places', av: ['#9cbfa0', '#22385a'], board: '#2f4a3a', pic: { img: '/assets/room/me-summit.webp' },
       pages: () => [
         chapter('Bab Lima', 'The person <em>in between</em>', 'Some days at a desk. Some days, a little further out.'),
         `<div class="pc"><span class="sc center">Album</span><div class="album">${albumHTML()}</div></div>`,
@@ -644,7 +709,7 @@ a.bk:hover{background:#f7f7f6}
   }
   function albumHTML() {
     const ph = data.photos.slice(0, 2);
-    const frames = [{ img: IMG.portrait, cap: 'A face behind the work.' }, ph[0] ? { img: ph[0].src, cap: ph[0].caption || ph[0].location || '' } : { cap: 'Work', empty: 'Album Work' }, ph[1] ? { img: ph[1].src, cap: ph[1].caption || ph[1].location || '' } : { cap: 'Outdoors', empty: 'Album Outdoors' }];
+    const frames = [{ img: IMG.portrait, cap: 'A face behind the work.' }, ph[0] ? { img: ph[0].src, cap: ph[0].caption || ph[0].location || '' } : { img: '/assets/room/me-teach.webp', cap: 'Work' }, ph[1] ? { img: ph[1].src, cap: ph[1].caption || ph[1].location || '' } : { img: '/assets/room/me-camp.webp', cap: 'Outdoors' }];
     const pos = ['left:2%;top:6%;transform:rotate(-4deg)', 'right:0;top:20%;transform:rotate(5deg)', 'left:18%;bottom:2%;transform:rotate(-1deg)'];
     return frames.map((f, i) => `<figure class="polar" style="${pos[i]}"><div class="ph">${f.img ? `<img src="${esc(f.img)}" alt="" referrerpolicy="no-referrer">` : esc(f.empty)}</div><figcaption>${esc(f.cap)}</figcaption></figure>`).join('');
   }
@@ -896,6 +961,63 @@ a.bk:hover{background:#f7f7f6}
   }
   drawShelves();
   document.getElementById('bookcase').onclick = openFavs;
+
+  // ---------- desk boombox: Dicky's own songs ----------
+  const PLAYLIST = [
+    { t: 'Only Me', f: 'only-me' }, { t: 'Desember', f: 'desember' }, { t: 'Your Smile', f: 'your-smile' }, { t: 'The Next Episode', f: 'the-next-episode' },
+    { t: 'Romantice', f: 'romantice' }, { t: 'Terima Kasih', f: 'terima-kasih' }, { t: 'Renung', f: 'renung' }, { t: 'Sempurna Bersamamu', f: 'sempurna-bersamamu' }
+  ];
+  const player = document.getElementById('player'), np = document.getElementById('np'), hint = document.getElementById('music-hint');
+  const OFF_KEY = 'dicky-music-off', POS_KEY = 'dicky-music-track';
+  const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+  const audio = new Audio(); audio.preload = 'auto'; audio.volume = .6;
+  let ti = Math.max(0, Math.min(PLAYLIST.length - 1, +(store.get(POS_KEY) || 0))), playing = false, ctx = null, analyser = null, freq = null;
+  const load = i => { ti = (i + PLAYLIST.length) % PLAYLIST.length; audio.src = '/assets/music/' + PLAYLIST[ti].f + '.mp3'; store.set(POS_KEY, String(ti)); label(); };
+  function graph() {
+    if (ctx) return; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { ctx = new AC(); analyser = ctx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = .78; freq = new Uint8Array(analyser.frequencyBinCount); ctx.createMediaElementSource(audio).connect(analyser); analyser.connect(ctx.destination); } catch { ctx = null; analyser = null; }
+  }
+  function label() {
+    const t = PLAYLIST[ti].t + ' — Dicky Adisaputra';
+    np.querySelector('.np-t').textContent = PLAYLIST[ti].t;
+    player.querySelector('.tip').textContent = (playing ? '❚❚ Jeda · ' : '▶ Putar · ') + PLAYLIST[ti].t;
+    player.setAttribute('aria-label', (playing ? 'Jeda ' : 'Putar ') + t); np.setAttribute('aria-label', (playing ? 'Jeda ' : 'Putar ') + t);
+  }
+  function setState(on) { playing = on; player.classList.toggle('playing', on); np.querySelector('.np-ico').textContent = on ? '❚❚' : '▶'; np.setAttribute('aria-pressed', on); label(); }
+  async function play(fromUser) {
+    if (!audio.src) load(ti);
+    try {
+      await audio.play(); graph(); if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+      setState(true); if (fromUser) store.set(OFF_KEY, null); return true;
+    } catch { setState(false); return false; }
+  }
+  function pause() { audio.pause(); setState(false); store.set(OFF_KEY, '1'); }
+  const toggle = () => playing ? pause() : play(true);
+  audio.addEventListener('ended', () => { load(ti + 1); play(false); });
+  player.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  player.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  np.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  document.getElementById('np-next').addEventListener('click', e => { e.stopPropagation(); load(ti + 1); play(true); });
+  // autoplay on load; browsers that block sound start on the first tap, click or key press
+  function armGesture() {
+    const go = ev => { if (ev.target.closest && ev.target.closest('#player,#np,#np-next')) return; ['pointerdown', 'keydown', 'touchend'].forEach(t => removeEventListener(t, go, true)); hint.classList.remove('show'); play(false); };
+    ['pointerdown', 'keydown', 'touchend'].forEach(t => addEventListener(t, go, true));
+    hint.classList.add('show'); setTimeout(() => hint.classList.remove('show'), 5000);
+  }
+  load(ti);
+  if (store.get(OFF_KEY) !== '1') play(false).then(ok => { if (!ok) armGesture(); });
+  // levels drive the boombox speakers and meters
+  let lv = 0, bass = 0;
+  (function frame(t) {
+    requestAnimationFrame(frame);
+    let L = 0, B = 0;
+    if (playing) {
+      if (analyser) { analyser.getByteFrequencyData(freq); let s = 0, sb = 0; for (let i = 1; i < 48; i++) { s += freq[i]; if (i < 7) sb += freq[i]; } L = s / 47 / 255; B = sb / 6 / 255; }
+      if (!L) { L = .35 + .25 * Math.sin(t / 180); B = .4 + .4 * Math.max(0, Math.sin(t / 395)); }
+    }
+    lv += (Math.min(1, L * 1.6) - lv) * .25; bass += (Math.min(1, B * 1.2) - bass) * .35;
+    player.style.setProperty('--lv', lv.toFixed(3)); player.style.setProperty('--bass', bass.toFixed(3)); np.style.setProperty('--lv', lv.toFixed(3));
+  })(0);
 
   // ---------- date, clock, weather, rotating "now" ----------
   const tz = 'Asia/Jakarta';
