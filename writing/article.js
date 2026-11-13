@@ -1,45 +1,162 @@
 (() => {
   'use strict';
-  const { node, list, formatDate, getPost } = window.WritingSource;
-  const root = document.querySelector('#article-root'); const slug = new URLSearchParams(location.search).get('slug');
-  function head(post) {
-    document.title = post.title + ' — Dicky Adisaputra'; document.querySelector('meta[name="description"]').content = post.excerpt || post.subtitle || 'Tulisan oleh Dicky Adisaputra.';
-    root.replaceChildren(); const header = node('header', 'article-head'); const back = node('a', 'writing-back', '← Semua tulisan'); back.href = './';
-    header.append(back, node('p', 'eyebrow', post.category || 'Writing'), node('h1', 'article-title', post.title));
-    if (post.subtitle) header.append(node('p', 'article-subtitle', post.subtitle));
-    const byline = node('div', 'article-byline'); byline.append(node('span', '', 'Dicky Adisaputra'), node('span', '', '·'), node('time', '', formatDate(post.published_at))); header.append(byline); root.append(header);
+  const { list, formatDate, getPost } = window.WritingSource;
+  const { html: coverHTML, esc, progress } = window.WritingCover;
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement, book = $('book'), pgL = $('pg-l'), pgR = $('pg-r'), measure = $('measure');
+  const slug = new URLSearchParams(location.search).get('slug');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let post = null, flowHTML = '', pages = [], single = false, si = 0, busy = true, L = {}, opened = false;
+
+  // ---------- layout ----------
+  function layout() {
+    single = innerWidth < 860;
+    const availH = innerHeight - (single ? 150 : 130), availW = single ? innerWidth - 24 : Math.min(innerWidth - 170, 1240) / 2;
+    const pw = Math.floor(Math.min(availW, availH * .71)), ph = Math.floor(pw / .71);
+    const fs = Math.max(12, Math.min(17, pw * .034));
+    const px = Math.round(pw * .11), pt = Math.round(ph * .085), pb = Math.round(ph * .1);
+    L = { pw, ph, fs, px, pt, pb, wi: pw - px * 2, hi: ph - pt - pb, gap: px * 2 };
+    const set = (k, v) => root.style.setProperty(k, v);
+    set('--pw', pw + 'px'); set('--ph', ph + 'px'); set('--fs', fs + 'px'); set('--px', px + 'px'); set('--pt', pt + 'px'); set('--pb', pb + 'px');
+    set('--wi', L.wi + 'px'); set('--hi', L.hi + 'px'); set('--gap', L.gap + 'px');
+    book.classList.toggle('single', single);
   }
-  async function show(post) {
-    head(post); const article = node('article', 'reader-prose');
+
+  // ---------- pages ----------
+  const titleSize = t => t.length < 18 ? '3em' : t.length < 34 ? '2.4em' : t.length < 60 ? '1.9em' : '1.55em';
+  const titlePage = () => `<div class="tp"><span class="cat">${esc(post.category || 'Catatan')}</span><h1 style="--tsz:${titleSize(post.title)}">${esc(post.title)}</h1>${post.subtitle || post.excerpt ? `<span class="q">“</span><p class="sub">${esc(post.subtitle || post.excerpt)}</p>` : ''}<span class="meta">Dicky Adisaputra · ${esc(formatDate(post.published_at))}</span></div>`;
+  const textPage = (k, n) => `<div class="tx"><span class="mark">${esc(post.category || 'Catatan')}</span><div class="clip"><div class="flow" style="transform:translateX(${-k * (L.wi + L.gap)}px)">${flowHTML}</div></div><span class="num">${k + 2}</span></div>`;
+  const endPage = () => `<div class="cl"><span class="orn">◆ ◆ ◆</span><h2>Selesai dibaca.</h2><p>Terima kasih sudah membaca “${esc(post.title)}”.</p><a href="./">Kembali ke rak tulisan</a><a class="ghost" href="/">Ke ruang kerja</a></div>`;
+  function lockPage(msg = '') {
+    return `<div class="cl"><span class="orn">◆</span><h2>Tulisan ini dikunci.</h2><p>Judulnya terbuka untuk semua orang. Isinya hanya untuk pembaca yang menerima password dari Dicky.</p>
+      <form id="unlock"><label class="sr" for="pw" style="position:absolute;left:-9999px">Password tulisan</label><input id="pw" type="password" required minlength="8" autocomplete="current-password" placeholder="Masukkan password"><button class="btn" type="submit">Buka tulisan</button><span class="err" role="status">${esc(msg)}</span></form></div>`;
+  }
+
+  async function paginate() {
+    measure.innerHTML = `<div class="flow">${flowHTML}</div>`;
+    const flow = measure.firstElementChild;
+    await Promise.all([...flow.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; setTimeout(r, 4000); })));
+    const n = Math.max(1, Math.round((flow.scrollWidth + L.gap) / (L.wi + L.gap)));
+    measure.innerHTML = '';
+    pages = [titlePage, ...Array.from({ length: n }, (_, k) => () => textPage(k, n)), endPage];
+  }
+
+  const pageHTML = i => (i >= 0 && i < pages.length) ? pages[i]() : '';
+  const maxSpread = () => single ? pages.length - 1 : Math.ceil(pages.length / 2) - 1;
+  const leftIdx = s => single ? -1 : 2 * s, rightIdx = s => single ? s : 2 * s + 1;
+  function render() {
+    pgL.innerHTML = single ? '' : pageHTML(leftIdx(si)); pgR.innerHTML = pageHTML(rightIdx(si));
+    const ms = maxSpread(), total = pages.length;
+    $('prev').disabled = si <= 0; $('next').disabled = si >= ms;
+    $('r-pages').textContent = single ? `Halaman ${si + 1} dari ${total}` : `Halaman ${leftIdx(si) + 1}–${Math.min(rightIdx(si) + 1, total)} dari ${total}`;
+    const p = ms ? si / ms : 1; $('r-meter').style.width = (p * 100) + '%';
+    if (post && post.content != null) progress.set(slug, { p, title: post.title });
+    bindUnlock();
+  }
+
+  // ---------- page turning ----------
+  function makeLeaf(cls, front, back) {
+    const lf = document.createElement('div'); lf.className = 'leaf ' + cls;
+    lf.innerHTML = `<div class="face front">${front}</div><div class="face back">${back}</div>`; book.append(lf); return lf;
+  }
+  function spin(lf, from, to, ms) {
+    return new Promise(res => {
+      if (reduce) { lf.remove(); return res(); }
+      const a = lf.animate([{ transform: `rotateY(${from}deg)` }, { transform: `rotateY(${to}deg)` }], { duration: ms, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
+      lf.querySelectorAll('.face').forEach(f => f.animate([{ '--shade': 0 }, { '--shade': .22 }, { '--shade': 0 }], { duration: ms }));
+      a.onfinish = () => { lf.remove(); res(); };
+    });
+  }
+  async function flip(dir) {
+    if (busy || !pages.length) return; const ns = si + dir; if (ns < 0 || ns > maxSpread()) return;
+    busy = true;
+    if (dir > 0) {
+      const lf = makeLeaf('fwd', pageHTML(rightIdx(si)), single ? '' : pageHTML(leftIdx(ns)));
+      pgR.innerHTML = pageHTML(rightIdx(ns));
+      await spin(lf, 0, -180, 950);
+    } else if (single) {
+      const lf = makeLeaf('fwd', pageHTML(rightIdx(ns)), ''); lf.style.transform = 'rotateY(-180deg)'; await spin(lf, -180, 0, 950);
+    } else {
+      const lf = makeLeaf('bwd', pageHTML(leftIdx(si)), pageHTML(rightIdx(ns))); pgL.innerHTML = pageHTML(leftIdx(ns)); await spin(lf, 0, 180, 950);
+    }
+    si = ns; render(); busy = false;
+  }
+  const coverLeaf = () => { const cv = coverHTML(post); return `<div class="cover" style="--c:${cv.c}">${cv.inner}</div>`; };
+  async function openBook(startSpread) {
+    si = 0; busy = true;
+    book.classList.add('closed', 'arriving'); render();
+    const lf = makeLeaf('fwd', coverLeaf(), single ? '' : pageHTML(0));
+    if (single) pgR.innerHTML = pageHTML(0);
+    await new Promise(r => setTimeout(r, reduce ? 0 : 60)); book.classList.remove('arriving');
+    await new Promise(r => setTimeout(r, reduce ? 0 : 450));
+    book.classList.remove('closed');
+    await spin(lf, 0, -180, 1250);
+    render(); busy = false; opened = true;
+    if (startSpread > 0) { si = Math.min(startSpread, maxSpread()); render(); }
+  }
+
+  // ---------- locked posts ----------
+  function bindUnlock() {
+    const form = $('unlock'); if (!form) return;
+    form.onsubmit = async e => {
+      e.preventDefault(); const input = $('pw'), btn = form.querySelector('button'), err = form.querySelector('.err');
+      btn.disabled = true; err.textContent = 'Memeriksa…';
+      try {
+        const full = await getPost(slug, input.value);
+        if (!full) { err.textContent = 'Password belum cocok.'; return; }
+        post = full; await buildFlow(); await paginate(); si = 0; render();
+      } catch { err.textContent = 'Belum dapat dibuka. Periksa koneksi lalu coba lagi.'; }
+      finally { input.value = ''; btn.disabled = false; }
+    };
+  }
+
+  // ---------- content ----------
+  async function buildFlow() {
+    let body = '';
     try {
       const [{ marked }, { default: DOMPurify }] = await Promise.all([import('https://cdn.jsdelivr.net/npm/marked@18.1.2/+esm'), import('https://cdn.jsdelivr.net/npm/dompurify@3.4.17/+esm')]);
-      article.innerHTML = DOMPurify.sanitize(marked.parse(post.content || ''));
-    } catch { article.classList.add('plain-prose'); article.textContent = post.content || ''; }
-    root.append(article); document.dispatchEvent(new Event('content:rendered'));
+      body = DOMPurify.sanitize(marked.parse(post.content || ''));
+    } catch { body = (post.content || '').split(/\n{2,}/).map(p => `<p>${esc(p)}</p>`).join(''); }
+    flowHTML = `<div class="band">${esc(post.title)}</div>${post.excerpt && post.subtitle ? `<p class="lead">${esc(post.excerpt)}</p>` : ''}${body}`;
   }
-  function locked(post, live) {
-    head(post); const card = node('section', 'lock-card');
-    card.append(node('span', 'reader-lock-icon', '⌁'), node('p', 'eyebrow', 'A private note'), node('h2', '', 'Tulisan ini dikunci.'), node('p', '', 'Judulnya terbuka untuk semua orang. Isinya hanya untuk pembaca yang menerima password dari Dicky.'));
-    const form = node('form', 'unlock-form'); const label = node('label', 'screen-reader-only', 'Password tulisan'); label.htmlFor = 'article-password';
-    const input = node('input'); input.id = 'article-password'; input.type = 'password'; input.name = 'password'; input.required = true; input.minLength = 8; input.autocomplete = 'current-password'; input.placeholder = 'Masukkan password tulisan';
-    const button = node('button', 'button', 'Buka tulisan ↗'); button.type = 'submit'; const notice = node('p', 'unlock-notice'); notice.setAttribute('role', 'status');
-    form.append(label, input, button); card.append(form, notice); root.append(card);
-    if (!live) notice.textContent = 'Daftar dari arsip. Koneksi diperlukan untuk membuka isi tulisan.';
-    form.addEventListener('submit', async event => {
-      event.preventDefault(); button.disabled = true; notice.textContent = 'Memeriksa akses tulisan…';
-      try { const opened = await getPost(slug, input.value); if (opened) await show(opened); else notice.textContent = 'Password belum cocok. Periksa kembali password dari Dicky.'; }
-      catch { notice.textContent = 'Tulisan belum dapat dibuka. Periksa koneksi lalu coba kembali.'; }
-      finally { input.value = ''; button.disabled = false; }
-    });
-    document.dispatchEvent(new Event('content:rendered'));
+  function message(text) { pgR.innerHTML = `<div class="loading-msg">${esc(text)}</div>`; }
+
+  async function start() {
+    layout(); message('Membuka buku…');
+    const result = await list();
+    const meta = result.posts.find(p => p.slug === slug);
+    if (!meta) { busy = false; book.classList.remove('closed'); pgL.innerHTML = ''; pgR.innerHTML = `<div class="cl"><h2>${result.live ? 'Tulisan tidak ditemukan.' : 'Belum dapat dimuat.'}</h2><p>${result.live ? 'Mungkin tulisan ini sudah dipindahkan.' : 'Periksa koneksi lalu muat ulang halaman.'}</p><a href="./">Kembali ke rak tulisan</a></div>`; return; }
+    post = { ...meta, content: null };
+    document.title = meta.title + ' — Dicky Adisaputra';
+    document.querySelector('meta[name="description"]').content = meta.excerpt || meta.subtitle || 'Tulisan oleh Dicky Adisaputra.';
+    $('r-title').textContent = (meta.category || 'Catatan') + ' · ' + meta.title;
+    if (meta.access_level === 'password') { pages = [titlePage, () => lockPage()]; return openBook(0); }
+    try { const full = await getPost(slug); if (full) post = full; } catch {}
+    if (post.content == null) { pages = [titlePage, () => `<div class="cl"><h2>Belum dapat dimuat.</h2><p>Silakan coba lagi sebentar lagi.</p><a href="./">Kembali ke rak tulisan</a></div>`]; return openBook(0); }
+    await buildFlow(); await paginate();
+    const saved = progress.get(slug);
+    openBook(saved && saved.p > 0 && saved.p < 1 ? Math.round(saved.p * maxSpread()) : 0);
   }
-  list().then(async result => {
-    const post = result.posts.find(item => item.slug === slug);
-    if (!post) { root.replaceChildren(node('p', 'writing-empty', result.live ? 'Tulisan tidak ditemukan.' : 'Tulisan belum dapat dimuat. Periksa koneksi lalu muat ulang halaman.')); const back = node('a', 'text-link', 'Kembali ke Writing ↗'); back.href = './'; root.append(back); return; }
-    if (post.access_level === 'password') { locked(post, result.live); return; }
-    try { const full = await getPost(slug); if (full) await show(full); else locked(post, result.live); }
-    catch { head(post); root.append(node('p', 'writing-empty', 'Tulisan belum dapat dimuat. Silakan coba lagi.')); }
+
+  // ---------- input ----------
+  $('next').onclick = () => flip(1); $('prev').onclick = () => flip(-1);
+  addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input,textarea')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) { e.preventDefault(); flip(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); flip(-1); }
+    if (e.key === 'Escape') location.href = './';
   });
-  addEventListener('scroll', () => { const max = document.documentElement.scrollHeight - innerHeight; document.querySelector('#reading-progress').style.width = (max > 0 ? Math.max(0, Math.min(100, scrollY / max * 100)) : 0) + '%'; }, { passive: true });
-  document.querySelector('#year').textContent = new Date().getFullYear();
+  book.addEventListener('click', e => {
+    if (e.target.closest('a,button,input,form')) return;
+    const r = book.getBoundingClientRect(); flip(e.clientX > r.left + r.width / 2 ? 1 : -1);
+  });
+  let sx = null;
+  book.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+  book.addEventListener('touchend', e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 45) flip(dx < 0 ? 1 : -1); });
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(async () => {
+    if (busy || !opened) return; const ratio = maxSpread() ? si / maxSpread() : 0; layout();
+    if (post && post.content != null) await paginate(); si = Math.round(ratio * maxSpread()); render();
+  }, 200); });
+
+  start();
 })();
