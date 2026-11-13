@@ -1,7 +1,7 @@
 // Shared book-cover helpers for the Writing shelf and reader.
 (() => {
   'use strict';
-  const PAL = [['#22385a', '#fff'], ['#7a4a2a', '#fff'], ['#2f5d4f', '#fff'], ['#b8665a', '#fff'], ['#e9dcc6', '#3b3029'], ['#5a7db0', '#fff'], ['#3b3d42', '#fff'], ['#c9a46a', '#2a2117'], ['#86a9bd', '#14283a'], ['#6e4b6a', '#fff']];
+  const PAL = [['#24406a', '#fff'], ['#172b4a', '#fff'], ['#3a5f93', '#fff'], ['#5a7db0', '#fff'], ['#1f3a5f', '#cfe0f5'], ['#2c4f7c', '#fff'], ['#8fa9cc', '#14283a'], ['#c9d6e8', '#172b4a'], ['#46638c', '#fff'], ['#0f2340', '#bcd0ec']];
   const hash = s => { let h = 0; for (const ch of String(s || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
   const color = post => PAL[hash(post.category || 'Catatan') % PAL.length];
   const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
