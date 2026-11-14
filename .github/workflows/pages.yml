@@ -38,7 +38,7 @@ jobs:
       - name: Stage public website
         run: |
           mkdir -p _site
-          rsync -a --exclude=".git" --exclude=".github" --exclude="_site" --exclude="ruang-source" --exclude="supabase" --exclude=".gitignore" --exclude="README.md" ./ _site/
+          rsync -a --exclude=".git" --exclude=".github" --exclude="_site" --exclude="ruang-source" --exclude="supabase" --exclude="finance-tracker" --exclude=".gitignore" --exclude="README.md" ./ _site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
