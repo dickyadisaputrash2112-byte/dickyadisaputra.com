@@ -158,8 +158,8 @@ a { color: inherit; }
 
 /* ---------- Bottom nav ---------- */
 .nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); width: min(452px, calc(100% - 28px)); height: 68px; padding: 7px; border-radius: 99px; background: var(--navy); box-shadow: 0 16px 34px rgba(8,18,50,0.35); display: flex; align-items: center; justify-content: space-between; z-index: 50; }
-.nav .on { height: 54px; padding: 0 20px 0 16px; border-radius: 99px; background: #fff; color: var(--navy); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
-.nav .off { width: 50px; height: 50px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); color: #fff; display: grid; place-items: center; }
+.nav .on { height: 54px; padding: 0 18px 0 14px; border-radius: 99px; background: #fff; color: var(--navy); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+.nav .off { width: 48px; height: 48px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); color: #fff; display: grid; place-items: center; }
 .nav .add { width: 50px; height: 50px; border-radius: 99px; background: var(--ice); color: var(--navy); display: grid; place-items: center; }
 
 /* ---------- Gelap: onboarding ---------- */
@@ -282,6 +282,7 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
 .day-grid { display: flex; flex-direction: column; gap: 14px; }
 
 /* ---------- Desktop ---------- */
+.nav .off span.lbl { display: none; }
 @media (min-width: 900px) {
   .frame { max-width: none; }
   .page { max-width: 1120px; margin: 0 auto; padding: 32px 40px 48px 156px; gap: 18px; }
@@ -305,7 +306,6 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
   .dark-page { max-width: 480px; margin: 0 auto; }
   .toast-wrap { top: 24px; }
 }
-.nav .off span.lbl { display: none; }
 
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
@@ -485,7 +485,7 @@ function toast(msg) {
 function fail(e) { S.busy = false; toast((e && e.message) || 'Terjadi kesalahan.'); render(); }
 
 /* ---------------- Router ---------------- */
-var TABS = ['home', 'tx', 'insight', 'me'];
+var TABS = ['home', 'tx', 'insight', 'goals', 'alloc', 'me'];
 function go(route, params, replace) {
   if (TABS.indexOf(route) > -1) S.stack = [];
   else if (!replace) S.stack.push({ route: S.route, params: S.params });
@@ -527,10 +527,11 @@ function header(title, left, right) {
   return '<header class="hdr">' + l + '<h1>' + esc(title) + '</h1>' + (right || '<span class="spacer"></span>') + '</header>';
 }
 function navBar(active) {
-  var items = [['home', 'Beranda', 'home'], ['tx', 'Transaksi', 'list'], ['insight', 'Insight', 'chart'], ['me', 'Profil', 'user']];
+  var items = [['home', 'Beranda', 'home'], ['tx', 'Transaksi', 'list'], ['insight', 'Insight', 'chart'], ['plan', 'Rencana', 'target'], ['me', 'Profil', 'user']];
   return '<nav class="nav" aria-label="Navigasi utama">' + items.map(function (it) {
-    if (it[0] === active) return '<button class="on" data-act="go" data-r="' + it[0] + '" aria-current="page">' + ic(it[2]) + it[1] + '</button>';
-    return '<button class="off" data-act="go" data-r="' + it[0] + '" aria-label="' + it[1] + '">' + ic(it[2]) + '<span class="lbl">' + it[1] + '</span></button>';
+    var r = it[0] === 'plan' ? (S.planTab || 'goals') : it[0];
+    if (it[0] === active) return '<button class="on" data-act="go" data-r="' + r + '" aria-current="page">' + ic(it[2]) + it[1] + '</button>';
+    return '<button class="off" data-act="go" data-r="' + r + '" aria-label="' + it[1] + '">' + ic(it[2]) + '<span class="lbl">' + it[1] + '</span></button>';
   }).join('') + '</nav>';
 }
 function loading(text) { return '<div class="loading"><span class="spin"></span>' + esc(text || 'Memuat…') + '</div>'; }
@@ -1221,11 +1222,16 @@ VIEWS.akun = function () {
    ================================================================ */
 var GOAL_ICONS = ['target', 'beach', 'shield', 'heart', 'house', 'car', 'book', 'gift', 'plane'];
 var GOAL_COLORS = ['#2E55B0', '#D9652B', '#A93F75', '#17643F', '#5B3FD6', '#9A5A22'];
+function planSeg(active) {
+  return '<div class="seg"><button class="' + (active === 'goals' ? 'on' : '') + '" data-act="go" data-r="goals">' + ic('target', 'ic-s') + 'Goals &amp; tabungan</button>' +
+    '<button class="' + (active === 'alloc' ? 'on' : '') + '" data-act="go" data-r="alloc">' + ic('pie', 'ic-s') + 'Alokasi bulanan</button></div>';
+}
 VIEWS.goals = function () {
+  S.planTab = 'goals';
   var g = need('goals', 'goals', {});
-  var hdr = header('Goals & tabungan', null, '<button class="cbtn dark" data-act="goalNew" aria-label="Tambah goal">' + ic('plus') + '</button>');
-  if (!g) return frame(hdr + loading());
-  if (g.__error) return frame(hdr + errBox(g));
+  var hdr = header('Rencana', 'none', '<button class="cbtn dark" data-act="goalNew" aria-label="Tambah goal">' + ic('plus') + '</button>') + planSeg('goals');
+  if (!g) return frame(hdr + loading(), { nav: 'plan' });
+  if (g.__error) return frame(hdr + errBox(g), { nav: 'plan' });
   var active = g.filter(function (x) { return x.status !== 'done'; }), done = g.filter(function (x) { return x.status === 'done'; });
   var total = g.reduce(function (s, x) { return s + x.current; }, 0), target = g.reduce(function (s, x) { return s + x.target; }, 0);
   var month = g.reduce(function (s, x) { return s + x.thisMonth; }, 0), perMonth = active.reduce(function (s, x) { return s + x.monthly; }, 0);
@@ -1245,8 +1251,8 @@ VIEWS.goals = function () {
   var doneHtml = done.map(function (x) {
     return '<div class="glass pad-s" style="display:flex;align-items:center;gap:12px;border-radius:26px;border-style:dashed"><span style="width:40px;height:40px;border-radius:99px;background:var(--green);color:#fff;display:grid;place-items:center">' + ic('check', 'ic-s') + '</span><span style="flex:1"><b style="font-size:14px">' + esc(x.name) + '</b><div class="small" style="font-weight:600;color:var(--ink-2)">Tercapai · ' + rp(x.target) + '</div></span></div>';
   }).join('');
-  return frame(hdr + (g.length ? hero : '') + info + '<div class="sec-head"><h2>Goal aktif</h2><span class="small" style="font-weight:700">' + active.length + ' goal</span></div>' +
-    (cards || '<div class="glass empty"><b>Belum ada goal</b>Buat goal pertama: dana darurat, liburan, atau menikah.<br><br><button class="btn btn-dark" data-act="goalNew">Buat goal</button></div>') + doneHtml);
+  return frame(hdr + '<div class="cols"><div class="col">' + (g.length ? hero : '') + info + '</div><div class="col"><div class="sec-head"><h2>Goal aktif</h2><span class="small" style="font-weight:700">' + active.length + ' goal</span></div>' +
+    (cards || '<div class="glass empty"><b>Belum ada goal</b>Buat goal pertama: dana darurat, liburan, atau menikah.<br><br><button class="btn btn-dark" data-act="goalNew">Buat goal</button></div>') + doneHtml + '</div></div>', { nav: 'plan' });
 };
 VIEWS.goal = function () {
   var id = S.params.id;
@@ -1288,14 +1294,15 @@ VIEWS.goalEdit = function () {
    ALOKASI BULANAN
    ================================================================ */
 VIEWS.alloc = function () {
+  S.planTab = 'alloc';
   var m = ym();
   var d = need('alloc:' + m, 'allocation', { month: m });
   var editing = !!S.ae;
-  var hdr = header('Alokasi bulanan', null, editing
+  var hdr = header('Rencana', 'none', editing
     ? '<button class="cbtn dark" data-act="aeSave" aria-label="Simpan">' + ic('check') + '</button>'
-    : '<button class="cbtn" data-act="aeOpen" aria-label="Ubah alokasi">' + ic('edit') + '</button>');
-  if (!d) return frame(hdr + loading());
-  if (d.__error) return frame(hdr + errBox(d));
+    : '<button class="cbtn" data-act="aeOpen" aria-label="Ubah alokasi">' + ic('edit') + '</button>') + planSeg('alloc');
+  if (!d) return frame(hdr + loading(), { nav: 'plan' });
+  if (d.__error) return frame(hdr + errBox(d), { nav: 'plan' });
   var tpls = [[50, 20, 30], [50, 30, 20], [60, 20, 20]];
   var cur = editing ? S.ae : d.pct;
   var seg = '<div class="seg">' + tpls.map(function (t) {
@@ -1329,7 +1336,7 @@ VIEWS.alloc = function () {
     return '<section class="glass" style="padding:16px 16px 8px;border-radius:30px"><div style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:99px;background:' + colors[g.key] + '"></span><b style="flex:1;font-size:16px">' + g.name + '</b><span class="small" style="font-weight:700;color:var(--ink-2)">' + short(g.used) + ' <span class="muted">/ ' + short(g.amount) + '</span></span></div>' +
       (items || '<div class="empty small">' + (g.key === 'save' ? 'Belum ada goal. Buat di menu Goals.' : 'Belum ada pengeluaran di kelompok ini.') + '</div>') + '</section>';
   }).join('');
-  return frame(hdr + seg + hero + editBox + groups);
+  return frame(hdr + '<div class="cols"><div class="col">' + seg + hero + editBox + '</div><div class="col">' + groups + '</div></div>', { nav: 'plan' });
 };
 
 /* ================================================================

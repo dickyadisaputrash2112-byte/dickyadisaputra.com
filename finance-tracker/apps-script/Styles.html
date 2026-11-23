@@ -149,8 +149,8 @@ a { color: inherit; }
 
 /* ---------- Bottom nav ---------- */
 .nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); width: min(452px, calc(100% - 28px)); height: 68px; padding: 7px; border-radius: 99px; background: var(--navy); box-shadow: 0 16px 34px rgba(8,18,50,0.35); display: flex; align-items: center; justify-content: space-between; z-index: 50; }
-.nav .on { height: 54px; padding: 0 20px 0 16px; border-radius: 99px; background: #fff; color: var(--navy); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
-.nav .off { width: 50px; height: 50px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); color: #fff; display: grid; place-items: center; }
+.nav .on { height: 54px; padding: 0 18px 0 14px; border-radius: 99px; background: #fff; color: var(--navy); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+.nav .off { width: 48px; height: 48px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); color: #fff; display: grid; place-items: center; }
 .nav .add { width: 50px; height: 50px; border-radius: 99px; background: var(--ice); color: var(--navy); display: grid; place-items: center; }
 
 /* ---------- Gelap: onboarding ---------- */
@@ -273,6 +273,7 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
 .day-grid { display: flex; flex-direction: column; gap: 14px; }
 
 /* ---------- Desktop ---------- */
+.nav .off span.lbl { display: none; }
 @media (min-width: 900px) {
   .frame { max-width: none; }
   .page { max-width: 1120px; margin: 0 auto; padding: 32px 40px 48px 156px; gap: 18px; }
@@ -296,7 +297,6 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
   .dark-page { max-width: 480px; margin: 0 auto; }
   .toast-wrap { top: 24px; }
 }
-.nav .off span.lbl { display: none; }
 
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
