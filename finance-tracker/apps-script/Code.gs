@@ -100,8 +100,14 @@ function menuSetup() {
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
+// Link aplikasi hanya dianggap ada kalau aplikasi web benar-benar sudah diterbitkan.
+// (Google bisa memberi alamat /exec walau belum ada penerapan, dan link itu gagal dibuka.)
 function appUrl_() {
-  try { return ScriptApp.getService().getUrl() || ''; } catch (e) { return ''; }
+  try {
+    var svc = ScriptApp.getService();
+    if (typeof svc.isEnabled === 'function' && !svc.isEnabled()) return '';
+    return svc.getUrl() || '';
+  } catch (e) { return ''; }
 }
 
 function menuOpenApp() {
@@ -113,8 +119,9 @@ function menuOpenApp() {
   if (url) {
     html = css + '<p>Link aplikasi kamu:</p><p><code>' + url + '</code></p>' +
       '<a class="btn" href="' + url + '" target="_blank">Buka aplikasi</a>' +
-      '<p style="font-size:12px;color:#555">Kirim link ini ke HP, buka di Chrome atau Safari dengan akun Google yang sama, lalu Tambahkan ke Layar Utama.</p>';
-    h = 240;
+      '<p style="font-size:12px;color:#555">Kirim link ini ke HP, buka di Chrome atau Safari dengan akun Google yang sama, lalu Tambahkan ke Layar Utama.</p>' +
+      '<p style="font-size:12px;color:#555;background:#FFF4E5;padding:8px 10px;border-radius:8px"><b>Muncul "Sorry, unable to open the file"?</b> Browser kamu login dengan beberapa akun Google. Buka link di jendela Samaran (Incognito) dan login hanya dengan akun ' + Session.getEffectiveUser().getEmail() + ', atau keluar dari akun lain dulu.</p>';
+    h = 340;
   } else {
     var editor = 'https://script.google.com/d/' + ScriptApp.getScriptId() + '/edit';
     html = css + '<p><b>Aplikasi belum diterbitkan.</b> Cukup sekali:</p><ol>' +

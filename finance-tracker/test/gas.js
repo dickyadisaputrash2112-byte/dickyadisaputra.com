@@ -70,7 +70,7 @@ function create(opts) {
     MailApp: { sendEmail: o => sent.push(o), getRemainingDailyQuota: () => 100 },
     ScriptApp: {
       WeekDay: { SUNDAY: 'SUNDAY', MONDAY: 'MONDAY', TUESDAY: 'TUESDAY', WEDNESDAY: 'WEDNESDAY', THURSDAY: 'THURSDAY', FRIDAY: 'FRIDAY', SATURDAY: 'SATURDAY' }, getProjectTriggers: () => triggers.slice(), deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
-      getScriptId: () => 'SCRIPT', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/X/exec' }),
+      getScriptId: () => 'SCRIPT', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/X/exec', isEnabled: () => !opts.notDeployed }),
       newTrigger: h => { const t = tb(); t._h = h; return t; }
     },
     HtmlService: {
