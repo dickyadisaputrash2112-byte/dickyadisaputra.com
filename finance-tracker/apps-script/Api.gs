@@ -148,7 +148,7 @@ var API = {
 };
 
 function hashPin_(pin) {
-  var salt = ScriptApp.getScriptId();
+  var salt = PIN_PEPPER + ':' + ScriptApp.getScriptId();
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, pin + ':' + salt);
   return bytes.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
 }

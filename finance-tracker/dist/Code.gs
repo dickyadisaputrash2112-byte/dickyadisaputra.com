@@ -5,6 +5,9 @@
 
 var APP = { name: 'catat.id', version: '2.0.0' };
 
+// Garam tambahan untuk hash PIN. Jangan diubah: mengubahnya membuat PIN yang sudah dibuat tidak cocok lagi.
+var PIN_PEPPER = 'b3e5d592908b042120caf6fee2045811';
+
 var SHEET = {
   TX: 'Transactions',
   ACCOUNTS: 'Accounts',
@@ -1913,7 +1916,7 @@ var API = {
 };
 
 function hashPin_(pin) {
-  var salt = ScriptApp.getScriptId();
+  var salt = PIN_PEPPER + ':' + ScriptApp.getScriptId();
   var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, pin + ':' + salt);
   return bytes.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
 }

@@ -4,6 +4,9 @@
 
 var APP = { name: 'catat.id', version: '2.0.0' };
 
+// Garam tambahan untuk hash PIN. Jangan diubah: mengubahnya membuat PIN yang sudah dibuat tidak cocok lagi.
+var PIN_PEPPER = 'b3e5d592908b042120caf6fee2045811';
+
 var SHEET = {
   TX: 'Transactions',
   ACCOUNTS: 'Accounts',

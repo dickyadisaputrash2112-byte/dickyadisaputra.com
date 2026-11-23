@@ -488,8 +488,9 @@ VIEWS.sync = function () {
 };
 
 /* ---------------- Kunci ---------------- */
-function setUnlocked() { try { sessionStorage.setItem('jejak_unlocked', '1'); } catch (e) {} }
-function isUnlocked() { try { return sessionStorage.getItem('jejak_unlocked') === '1'; } catch (e) { return false; } }
+var SESSION_KEY = 'cu_b3e5d592';
+function setUnlocked() { try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) {} }
+function isUnlocked() { try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch (e) { return false; } }
 VIEWS.lock = function () { return pinView('lock'); };
 VIEWS.pinSet = function () { return pinView('pinSet'); };
 
