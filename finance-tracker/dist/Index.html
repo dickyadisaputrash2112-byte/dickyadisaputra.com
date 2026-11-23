@@ -335,7 +335,8 @@ var S = {
   boot: null, route: 'boot', params: {}, stack: [], data: {}, loading: {},
   intro: 0, ob: null, pin: '', pinFirst: '', pinMode: '', syncState: null,
   review: null, det: null, add: null, txFilter: 'all', txQ: '', txSearch: false,
-  month: null, ae: null, gf: null, akun: null, srcEdit: null, dep: null, busy: false
+  month: null, ae: null, gf: null, akun: null, srcEdit: null, dep: null, busy: false,
+  tf: { period: 'all', accounts: [], categories: [], min: 0, max: 0 }, af: { accounts: [] }, fsheet: null, wk: null
 };
 
 /* ---------------- API ---------------- */
@@ -413,7 +414,8 @@ var P = {
   beach: 'M3 20h18M5 20l2-9h10l2 9M12 11V4M12 4l5 3M12 4 7 7',
   house: 'M3 11 12 4l9 7M5 10v10h14V10',
   gift: 'M3 8h18v4H3zM5 12v9h14v-9M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1Zm0 0c2-4 6-4 6-1s-6 1-6 1Z',
-  plane: 'M2 16l20-8-20-8 4 8-4 8ZM6 8h7'
+  plane: 'M2 16l20-8-20-8 4 8-4 8ZM6 8h7',
+  filter: 'M3 5h18l-7 8.5V19l-4 2v-7.5L3 5Z'
 };
 function ic(name, cls) {
   return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (P[name] || P.dots) + '"/></svg>';
@@ -529,7 +531,7 @@ function frame(content, opts) {
   opts = opts || {};
   return '<div class="frame app-bg"><div class="page' + (opts.nav ? '' : ' no-nav') + (opts.wide ? ' wide' : '') + '">' + content + '</div>' +
     (opts.nav ? navBar(opts.nav) + '<button class="fab" data-act="quickOpen" aria-label="Catat cepat">' + ic('plus') + 'Catat</button>' : '') +
-    (S.quick ? quickSheet() : '') + '</div>';
+    (S.quick ? quickSheet() : '') + (S.fsheet ? filterSheet() : '') + '</div>';
 }
 function darkFrame(content) { return '<div class="frame dark-bg"><div class="dark-page">' + content + '</div></div>'; }
 function header(title, left, right) {
@@ -947,11 +949,66 @@ function syncNow() {
 /* ================================================================
    TRANSAKSI
    ================================================================ */
+/* ---------------- Filter ---------------- */
+var PERIODS = [['all', 'Semua waktu'], ['this', 'Bulan ini'], ['last', 'Bulan lalu'], ['3m', '3 bulan terakhir'], ['year', 'Tahun ini']];
+function tfDefault() { return { period: 'all', accounts: [], categories: [], min: 0, max: 0 }; }
+function periodRange(p) {
+  var n = new Date(), y = n.getFullYear(), m = n.getMonth();
+  if (p === 'this') return { from: new Date(y, m, 1), to: new Date(y, m + 1, 1) };
+  if (p === 'last') return { from: new Date(y, m - 1, 1), to: new Date(y, m, 1) };
+  if (p === '3m') return { from: new Date(y, m - 2, 1), to: new Date(y, m + 1, 1) };
+  if (p === 'year') return { from: new Date(y, 0, 1), to: new Date(y + 1, 0, 1) };
+  return { from: null, to: null };
+}
+function filterCount(kind) {
+  if (kind === 'acct') return S.af.accounts.length ? 1 : 0;
+  var f = S.tf;
+  return (f.period !== 'all' ? 1 : 0) + (f.accounts.length ? 1 : 0) + (f.categories.length ? 1 : 0) + (f.min || f.max ? 1 : 0);
+}
+function filterBtn(kind) {
+  var n = filterCount(kind);
+  return '<button class="cbtn' + (n ? ' dark' : '') + '" data-act="filterOpen" data-k="' + kind + '" aria-label="Filter' + (n ? ', ' + n + ' aktif' : '') + '">' + ic('filter') +
+    (n ? '<span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:99px;background:var(--orange);color:var(--orange-ink);font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px">' + n + '</span>' : '') + '</button>';
+}
+function acctPill() {
+  var a = S.af.accounts;
+  return '<button class="pill white" data-act="filterOpen" data-k="acct" style="height:32px;padding:0 12px;font-size:12px;gap:6px">' + ic('filter', 'ic-s') + 'Rekening: ' + esc(a.length ? (a.length === 1 ? a[0] : a.length + ' dipilih') : 'Semua') + '</button>';
+}
+function activeFilters() {
+  var f = S.tf, parts = [];
+  if (f.period !== 'all') parts.push(PERIODS.filter(function (p) { return p[0] === f.period; })[0][1]);
+  if (f.accounts.length) parts.push(f.accounts.length === 1 ? f.accounts[0] : f.accounts.length + ' rekening');
+  if (f.categories.length) parts.push(f.categories.length === 1 ? f.categories[0] : f.categories.length + ' kategori');
+  if (f.min || f.max) parts.push((f.min ? short(f.min) : 'Rp0') + '–' + (f.max ? short(f.max) : '∞'));
+  if (!parts.length) return '';
+  return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + parts.map(function (p) { return '<span class="pill navy" style="height:30px;padding:0 12px">' + esc(p) + '</span>'; }).join('') +
+    '<button class="link" data-act="filterReset" data-k="tx" style="font-size:12px">Hapus filter</button></div>';
+}
+function filterSheet() {
+  var F = S.fsheet, D = F.draft;
+  var toggleChip = function (act, v, on) { return '<button class="chip' + (on ? ' on' : '') + '" data-act="' + act + '" data-v="' + esc(v) + '" aria-pressed="' + on + '">' + esc(v) + '</button>'; };
+  var accts = S.boot.accounts.filter(function (a) { return a.active; }).map(function (a) { return a.name; });
+  var body = '';
+  if (F.kind === 'tx') {
+    body += '<div style="font-size:14px;font-weight:800">Periode</div><div class="chips">' + PERIODS.map(function (p) {
+      return '<button class="chip' + (D.period === p[0] ? ' on' : '') + '" data-act="fPeriod" data-v="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div>';
+  }
+  body += '<div style="font-size:14px;font-weight:800">Rekening</div><div class="chips">' + accts.map(function (a) { return toggleChip('fAcct', a, D.accounts.indexOf(a) > -1); }).join('') + '</div>';
+  if (F.kind === 'tx') {
+    body += '<div style="font-size:14px;font-weight:800">Kategori</div><div class="chips">' + S.boot.categories.map(function (c) { return toggleChip('fCat', c.name, D.categories.indexOf(c.name) > -1); }).join('') + '</div>' +
+      '<div style="font-size:14px;font-weight:800">Nominal</div><div class="grid2"><div class="field"><label for="f-min">Paling kecil</label><input id="f-min" class="inp" inputmode="numeric" data-input="fMin" value="' + (D.min ? D.min.toLocaleString('id-ID') : '') + '" placeholder="Rp0"></div>' +
+      '<div class="field"><label for="f-max">Paling besar</label><input id="f-max" class="inp" inputmode="numeric" data-input="fMax" value="' + (D.max ? D.max.toLocaleString('id-ID') : '') + '" placeholder="Tanpa batas"></div></div>';
+  }
+  return '<div class="sheet-wrap" data-act="filterClose" data-self="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="Filter">' +
+    '<span class="grab"></span><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:19px;letter-spacing:-.03em">Filter</b><button class="cbtn" data-act="filterClose" aria-label="Tutup">' + ic('x') + '</button></div>' +
+    body + '<div class="row-btns"><button class="btn btn-glass" data-act="filterReset" data-k="' + F.kind + '">Hapus semua</button><button class="btn btn-dark grow" data-act="filterApply">Terapkan</button></div></div></div>';
+}
+
 VIEWS.tx = function () {
-  var key = 'tx:' + S.txFilter + ':' + S.txQ;
-  var d = need(key, 'transactions', { filter: S.txFilter, q: S.txQ, limit: 150 });
-  var hdr = header('Transaksi', '<button class="cbtn" data-act="txSearch" aria-label="Cari transaksi">' + ic('search') + '</button>',
-    '<button class="cbtn" data-act="go" data-r="add" aria-label="Catat transaksi">' + ic('plus') + '</button>');
+  var r = periodRange(S.tf.period);
+  var key = 'tx:' + S.txFilter + ':' + S.txQ + ':' + JSON.stringify(S.tf);
+  var d = need(key, 'transactions', { filter: S.txFilter, q: S.txQ, limit: 150, from: r.from && r.from.toISOString(), to: r.to && r.to.toISOString(), accounts: S.tf.accounts, categories: S.tf.categories, min: S.tf.min, max: S.tf.max });
+  var hdr = header('Transaksi', '<button class="cbtn" data-act="txSearch" aria-label="Cari transaksi">' + ic('search') + '</button>', filterBtn('tx')) + activeFilters();
   var search = S.txSearch ? '<label class="glass" style="display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;border-radius:99px">' + ic('search') +
     '<span class="sr">Cari</span><input id="tx-q" data-input="txQ" value="' + esc(S.txQ) + '" placeholder="Cari merchant, kategori, bank" style="flex:1;border:0;outline:none;background:transparent;font-size:15px;font-weight:600"></label>' : '';
   var rc = d && !d.__error ? d.reviewCount : 0;
@@ -977,7 +1034,7 @@ VIEWS.tx = function () {
   var body = groups.length ? '<div class="day-grid">' + groups.map(function (g) {
     return '<section class="glass day-card"><div class="day-head"><span class="pill white" style="height:28px;padding:0 12px">' + dayLabel(new Date(g.k).toISOString()) + '</span><b style="font-size:13px">' + (g.out ? '−' + rp(g.out) : '') + '</b></div>' + g.items.map(txRow).join('') + '</section>';
   }).join('') + '</div>' : '<div class="glass empty"><b>Tidak ada transaksi</b>Coba ubah filter atau kata kunci.</div>';
-  return frame(hdr + search + chips + (S.txFilter === 'all' && !S.txQ ? summary : '') + body +
+  return frame(hdr + search + chips + (S.txFilter === 'all' && !S.txQ && !filterCount('tx') ? summary : '') + body +
     (d.total > d.items.length ? '<p class="center small muted">Menampilkan ' + d.items.length + ' dari ' + d.total + ' transaksi.</p>' : ''), { nav: 'tx' });
 }
 
@@ -1166,10 +1223,10 @@ function addSave() {
    ================================================================ */
 VIEWS.insight = function () {
   var m = S.month || ym();
-  var d = need('insight:' + m, 'insight', { month: m });
+  var d = need('insight:' + m + ':' + S.af.accounts.join('|'), 'insight', { month: m, accounts: S.af.accounts });
   var hdr = header('Insight', '<button class="cbtn" data-act="month" data-v="-1" aria-label="Bulan sebelumnya">' + ic('back') + '</button>',
     '<button class="cbtn" data-act="month" data-v="1" aria-label="Bulan berikutnya"' + (m >= ym() ? ' disabled style="opacity:.4"' : '') + '>' + ic('right') + '</button>');
-  var label = '<div class="center"><span class="pill white" style="height:32px;padding:0 14px;font-size:13px">' + ymLabel(m) + '</span></div>';
+  var label = '<div class="center" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><span class="pill white" style="height:32px;padding:0 14px;font-size:13px">' + ymLabel(m) + '</span>' + acctPill() + '</div>';
   if (!d) return frame(hdr + label + loading(), { nav: 'insight' });
   if (d.__error) return frame(hdr + label + errBox(d), { nav: 'insight' });
   var max = Math.max.apply(null, d.bars.map(function (b) { return b.amount; }).concat([1]));
@@ -1234,10 +1291,11 @@ function historyRun() {
    ================================================================ */
 VIEWS.year = function () {
   var y = S.year || new Date().getFullYear();
-  var d = need('year:' + y, 'year', { year: y });
+  var d = need('year:' + y + ':' + S.af.accounts.join('|'), 'year', { year: y, accounts: S.af.accounts });
   var hasPrev = d && !d.__error && d.years.indexOf(y - 1) > -1;
   var hdr = header('Rekap ' + y, null, '<span style="display:flex;gap:8px"><button class="cbtn" data-act="yearShift" data-v="-1" aria-label="Tahun sebelumnya"' + (d && !d.__error && !hasPrev ? ' disabled style="opacity:.4"' : '') + '>' + ic('back') + '</button>' +
-    '<button class="cbtn" data-act="yearShift" data-v="1" aria-label="Tahun berikutnya"' + (y >= new Date().getFullYear() ? ' disabled style="opacity:.4"' : '') + '>' + ic('right') + '</button></span>');
+    '<button class="cbtn" data-act="yearShift" data-v="1" aria-label="Tahun berikutnya"' + (y >= new Date().getFullYear() ? ' disabled style="opacity:.4"' : '') + '>' + ic('right') + '</button></span>') +
+    '<div class="center">' + acctPill() + '</div>';
   if (!d) return frame(hdr + loading('Menghitung setahun…'), { wide: true });
   if (d.__error) return frame(hdr + errBox(d), { wide: true });
   var hist = d.history && d.history.target && new Date(d.history.target).getFullYear() <= y ? historyCard(d.history) : '';
@@ -1335,12 +1393,28 @@ VIEWS.me = function () {
     '</div><div class="col"><div class="sec-head"><h2>Pengaturan</h2></div>' + themeHtml +
     '<section class="glass" style="padding:6px;border-radius:30px;display:flex;flex-direction:column;gap:6px">' +
     rowToggle('set-ti', 'arrIn', 'Catat pemasukan', 'Gaji &amp; transfer masuk otomatis', b.settings.trackIncome, 'setTrack') +
-    rowToggle('set-wk', 'calendar', 'Review mingguan', 'Email tiap Minggu sore', b.settings.weeklyReviewEnabled, 'setWeekly') +
+    rowLink('openWeekly', 'mail', 'Review mingguan', b.settings.weeklyReviewEnabled ? 'Tiap ' + DAYS[b.settings.weeklyReviewDay] + ', ' + ('0' + b.settings.weeklyReviewHour).slice(-2) + '.00' + (b.settings.weeklyReviewCc ? ' · +' + b.settings.weeklyReviewCc.split(',').length + ' email' : '') : 'Mati') +
     rowToggle('set-pin', 'lock', 'Kunci dengan PIN', b.hasPin ? 'Aktif' : 'Belum diatur', b.hasPin, 'setPin') +
     rowLink('openYear', 'calendar', 'Rekap tahunan', 'Setahun keuanganmu dalam satu halaman') +
     rowLink('openSheet', 'sheet', 'Buka data di Google Sheets', 'Data tersimpan di Drive milikmu', 'var(--green)') +
     rowLink('syncNowMe', 'sync', 'Sinkronkan sekarang', 'Terakhir ' + ago(b.lastSync)) + '</section>' +
     '<p class="center small muted">catat.id v' + esc(b.app.version) + '</p></div></div>', { nav: 'me' });
+};
+
+VIEWS.weekly = function () {
+  var W = S.wk || (ACT.openWeekly(), S.wk);
+  var order = [1, 2, 3, 4, 5, 6, 0];
+  var hours = ''; for (var h = 5; h <= 22; h++) hours += '<option value="' + h + '"' + (W.hour === h ? ' selected' : '') + '>' + ('0' + h).slice(-2) + '.00</option>';
+  return frame(header('Review mingguan') +
+    '<section class="glass" style="padding:6px;border-radius:30px"><div class="toggle-row" style="background:rgba(255,255,255,0.5);padding:8px 10px 8px 8px"><span style="width:40px;height:40px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center;flex-shrink:0">' + ic('mail', 'ic-s') + '</span><span style="flex:1;min-width:0"><b style="font-size:14px">Kirim review ke email</b><small class="muted" style="font-weight:600">Ringkasan pengeluaran seminggu</small></span>' +
+    '<label class="switch"><span class="sr">Aktif</span><input type="checkbox" data-act="wkToggle"' + (W.enabled ? ' checked' : '') + '><i></i></label></div></section>' +
+    '<div style="' + (W.enabled ? '' : 'opacity:.45;pointer-events:none') + ';display:flex;flex-direction:column;gap:14px">' +
+    '<div style="font-size:14px;font-weight:800;padding:2px">Hari</div><div class="chips">' + order.map(function (d) {
+      return '<button class="chip' + (W.day === d ? ' on' : '') + '" data-act="wkDay" data-v="' + d + '">' + DAYS[d] + '</button>'; }).join('') + '</div>' +
+    '<section class="glass pad" style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="wk-hour">Jam kirim</label><select id="wk-hour" class="inp" data-input="wkHour">' + hours + '</select></div>' +
+    '<div class="field"><label for="wk-cc">Kirim juga ke (opsional)</label><input id="wk-cc" class="inp" type="email" data-input="wkCc" value="' + esc(W.cc) + '" placeholder="mis. email pasangan"><span class="small muted" style="padding-left:6px">Pisahkan dengan koma, maksimal 3 email.</span></div></section>' +
+    '<section class="glass pad-s" style="border-radius:22px;font-size:13px;font-weight:600;line-height:1.5;color:var(--ink-2)">Dikirim ke <b style="color:var(--ink)">' + esc(S.boot.email) + '</b> setiap <b style="color:var(--ink)">' + DAYS[W.day] + ' pukul ' + ('0' + W.hour).slice(-2) + '.00</b>. Google bisa mengirim sampai 1 jam setelah jam yang dipilih.</section></div>' +
+    '<div class="row-btns"><button class="btn btn-glass" data-act="wkTest"' + (S.busy ? ' disabled' : '') + '>Kirim contoh</button><button class="btn btn-dark grow" data-act="wkSave"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'Menyimpan…' : 'Simpan') + '</button></div>');
 };
 
 VIEWS.akun = function () {
@@ -1507,6 +1581,47 @@ var ACT = {
     }).catch(function (e) { S.busy = false; F.err = e.message; F.code = ''; render(); });
   },
   historyRun: historyRun,
+  filterOpen: function (ds) {
+    var src = ds.k === 'acct' ? { accounts: S.af.accounts } : S.tf;
+    S.fsheet = { kind: ds.k, draft: JSON.parse(JSON.stringify(src)) }; render();
+  },
+  filterClose: function (ds, el, e) { if (ds.self && e && e.target !== el) return; S.fsheet = null; render(); },
+  fPeriod: function (ds) { S.fsheet.draft.period = ds.v; render(); },
+  fAcct: function (ds) { var a = S.fsheet.draft.accounts, i = a.indexOf(ds.v); if (i > -1) a.splice(i, 1); else a.push(ds.v); render(); },
+  fCat: function (ds) { var a = S.fsheet.draft.categories, i = a.indexOf(ds.v); if (i > -1) a.splice(i, 1); else a.push(ds.v); render(); },
+  filterApply: function () {
+    var F = S.fsheet;
+    if (F.kind === 'acct') S.af = { accounts: F.draft.accounts };
+    else {
+      if (F.draft.min && F.draft.max && F.draft.min > F.draft.max) { toast('Nominal paling kecil lebih besar dari paling besar.'); return; }
+      S.tf = F.draft;
+    }
+    S.fsheet = null; render();
+  },
+  filterReset: function (ds) {
+    if (ds.k === 'acct') S.af = { accounts: [] }; else S.tf = tfDefault();
+    S.fsheet = null; render();
+  },
+  openWeekly: function () {
+    var st = S.boot.settings;
+    S.wk = { enabled: st.weeklyReviewEnabled, day: st.weeklyReviewDay, hour: st.weeklyReviewHour, cc: st.weeklyReviewCc };
+    go('weekly');
+  },
+  wkToggle: function () { S.wk.enabled = !S.wk.enabled; render(); },
+  wkDay: function (ds) { S.wk.day = Number(ds.v); render(); },
+  wkSave: function () {
+    var W = S.wk; S.busy = true; render();
+    api('saveWeekly', W).then(function () {
+      S.busy = false;
+      var st = S.boot.settings; st.weeklyReviewEnabled = W.enabled; st.weeklyReviewDay = W.day; st.weeklyReviewHour = W.hour; st.weeklyReviewCc = W.cc;
+      toast(W.enabled ? 'Review terkirim tiap ' + DAYS[W.day] + ' pukul ' + ('0' + W.hour).slice(-2) + '.00' : 'Review mingguan dimatikan');
+      back();
+    }).catch(fail);
+  },
+  wkTest: function () {
+    S.busy = true; render();
+    api('sendWeeklyNow', { cc: S.wk.cc }).then(function (r) { S.busy = false; toast(r.sent ? 'Contoh review terkirim ke ' + r.to + (r.cc ? ' dan ' + r.cc : '') : 'Belum terkirim'); render(); }).catch(fail);
+  },
   openYear: function () { S.year = new Date().getFullYear(); go('year'); },
   yearShift: function (ds) { S.year = (S.year || new Date().getFullYear()) + Number(ds.v); render(); },
   printYear: function () { window.print(); },
@@ -1691,6 +1806,10 @@ var INPUT = {
   gfDeadline: function (el) { S.gf.deadline = el.value; },
   depAmt: function (el) { var neg = /^\s*-/.test(el.value); var v = digits(el.value); S.dep.amount = neg ? -v : v; el.value = v ? (neg ? '-' : '') + v.toLocaleString('id-ID') : (neg ? '-' : ''); },
   depNote: function (el) { S.dep.note = el.value; },
+  fMin: function (el) { var v = digits(el.value); S.fsheet.draft.min = v; el.value = v ? v.toLocaleString('id-ID') : ''; },
+  fMax: function (el) { var v = digits(el.value); S.fsheet.draft.max = v; el.value = v ? v.toLocaleString('id-ID') : ''; },
+  wkHour: function (el) { S.wk.hour = Number(el.value); render(); },
+  wkCc: function (el) { S.wk.cc = el.value; },
   forgotCode: function (el) { var v = String(el.value).replace(/\D/g, '').slice(0, 6); el.value = v; S.forgot.code = v; var b = document.getElementById('fp-go'); if (b) b.disabled = v.length !== 6; },
   aeIncome: function (el) { var v = digits(el.value); S.ae.income = v; el.value = v ? v.toLocaleString('id-ID') : ''; },
   aePct: function (el) { S.ae[el.dataset.k] = Math.min(100, digits(el.value)); var s = document.getElementById('ae-sum'); if (s) s.textContent = 'Total ' + (S.ae.need + S.ae.want + S.ae.save) + '% (harus 100%)'; },

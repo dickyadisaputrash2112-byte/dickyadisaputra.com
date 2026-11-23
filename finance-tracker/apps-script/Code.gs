@@ -234,8 +234,21 @@ function ensureTriggers_() {
     if (LEGACY_TRIGGER_HANDLERS.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('jejakSyncTrigger').timeBased().everyMinutes(SYNC_CONFIG.triggerMinutes).create();
-  ScriptApp.newTrigger('jejakWeeklyReview').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY)
-    .atHour(Number(settings_().weeklyReviewHour) || 16).create();
+  refreshWeeklyTrigger_();
+}
+
+var WEEKDAYS_ = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+// Pasang ulang pemicu review mingguan sesuai pilihan pengguna (hari, jam, aktif/mati).
+function refreshWeeklyTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'jejakWeeklyReview') ScriptApp.deleteTrigger(t);
+  });
+  var s = settings_();
+  if (s.weeklyReviewEnabled === false) return;
+  var day = Number(s.weeklyReviewDay); if (!(day >= 0 && day <= 6)) day = 0;
+  var hour = Number(s.weeklyReviewHour); if (!(hour >= 0 && hour <= 23)) hour = 16;
+  ScriptApp.newTrigger('jejakWeeklyReview').timeBased().onWeekDay(ScriptApp.WeekDay[WEEKDAYS_[day]]).atHour(hour).create();
 }
 
 function jejakSyncTrigger() {

@@ -109,6 +109,8 @@ var DEFAULT_SETTINGS = {
   monthlyBudget: 0,
   weeklyReviewEnabled: true,
   weeklyReviewHour: 16,
+  weeklyReviewDay: 0,
+  weeklyReviewCc: '',
   initialDaysBack: 30,
   autoCategorize: true
 };

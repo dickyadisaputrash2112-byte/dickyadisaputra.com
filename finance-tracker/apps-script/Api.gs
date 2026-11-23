@@ -19,6 +19,9 @@ var API = {
       settings: {
         trackIncome: s.trackIncome !== false,
         weeklyReviewEnabled: s.weeklyReviewEnabled !== false,
+        weeklyReviewDay: Number(s.weeklyReviewDay) || 0,
+        weeklyReviewHour: s.weeklyReviewHour === '' || s.weeklyReviewHour === undefined ? 16 : Number(s.weeklyReviewHour),
+        weeklyReviewCc: String(s.weeklyReviewCc || ''),
         expectedIncome: Number(s.expectedIncome) || 0,
         allocNeed: Number(s.allocNeed) || 0,
         allocWant: Number(s.allocWant) || 0,
@@ -45,6 +48,7 @@ var API = {
     if (p.alloc) saveAllocation({ need: p.alloc.need, want: p.alloc.want, save: p.alloc.save });
     if (p.trackIncome !== undefined) setSetting_('trackIncome', !!p.trackIncome);
     if (p.weeklyReviewEnabled !== undefined) setSetting_('weeklyReviewEnabled', !!p.weeklyReviewEnabled);
+    if (p.weeklyReviewEnabled !== undefined) refreshWeeklyTrigger_();
     setSetting_('onboarded', true);
     ensureTriggers_();
     return { ok: true };
@@ -100,6 +104,19 @@ var API = {
 
   sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack, historyOnly: p && p.historyOnly }); },
   history: function () { return backfillInfo_(); },
+  saveWeekly: function (p) {
+    var day = Number(p.day), hour = Number(p.hour);
+    if (!(day >= 0 && day <= 6)) throw new Error('Hari tidak valid.');
+    if (!(hour >= 0 && hour <= 23)) throw new Error('Jam tidak valid.');
+    var cc = ccList_(p.cc);
+    setSetting_('weeklyReviewEnabled', !!p.enabled);
+    setSetting_('weeklyReviewDay', day);
+    setSetting_('weeklyReviewHour', hour);
+    setSetting_('weeklyReviewCc', cc.join(','));
+    refreshWeeklyTrigger_();
+    return { ok: true };
+  },
+  sendWeeklyNow: function (p) { return sendWeeklyReview_({ force: true, cc: p && p.cc !== undefined ? ccList_(p.cc).join(',') : undefined }); },
 
   home: function (p) { return homeData(p); },
   transactions: function (p) { return txList(p); },
@@ -164,6 +181,7 @@ var API = {
   },
   saveSettings: function (p) {
     ['trackIncome', 'weeklyReviewEnabled'].forEach(function (k) { if (p[k] !== undefined) setSetting_(k, !!p[k]); });
+    if (p.weeklyReviewEnabled !== undefined) refreshWeeklyTrigger_();
     if (p.theme !== undefined) {
       if (['biru', 'hijau', 'ungu', 'terakota', 'grafit'].indexOf(p.theme) === -1) throw new Error('Tema tidak dikenal.');
       setSetting_('theme', p.theme);
@@ -182,6 +200,13 @@ var API = {
     });
   }
 };
+
+function ccList_(v) {
+  var cc = String(v || '').split(/[,;\s]+/).filter(Boolean);
+  cc.forEach(function (e) { if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new Error('Email "' + e + '" tidak valid.'); });
+  if (cc.length > 3) throw new Error('Maksimal 3 email tambahan.');
+  return cc;
+}
 
 function maskEmail_(e) {
   var p = String(e).split('@');

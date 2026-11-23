@@ -68,7 +68,7 @@ function create(opts) {
     GmailApp: { search: (q, start, max) => { ctx._lastQuery = q; return start === 0 ? (opts.threads || []).map(msgs => ({ getMessages: () => msgs })) : []; } },
     MailApp: { sendEmail: o => sent.push(o), getRemainingDailyQuota: () => 100 },
     ScriptApp: {
-      WeekDay: { SUNDAY: 'SUNDAY' }, getProjectTriggers: () => triggers.slice(), deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
+      WeekDay: { SUNDAY: 'SUNDAY', MONDAY: 'MONDAY', TUESDAY: 'TUESDAY', WEDNESDAY: 'WEDNESDAY', THURSDAY: 'THURSDAY', FRIDAY: 'FRIDAY', SATURDAY: 'SATURDAY' }, getProjectTriggers: () => triggers.slice(), deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
       getScriptId: () => 'SCRIPT', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/X/exec' }),
       newTrigger: h => { const t = tb(); t._h = h; return t; }
     },

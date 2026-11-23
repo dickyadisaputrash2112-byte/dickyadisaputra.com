@@ -172,12 +172,27 @@ function weekSummary_(all) {
 
 // ---------------- Daftar transaksi ----------------
 
+// Filter rekening dipakai Transaksi, Insight, dan Rekap. Transfer ikut kalau rekening asal atau tujuannya cocok.
+function acctMatch_(t, accounts) {
+  if (!accounts || !accounts.length) return true;
+  return accounts.indexOf(t.account) > -1 || (t.toAccount && accounts.indexOf(t.toAccount) > -1);
+}
+
 function txList(p) {
   p = p || {};
   var all = txRows_();
   var filter = p.filter || 'all';
   var q = String(p.q || '').toLowerCase().trim();
+  var from = p.from ? new Date(p.from) : null, to = p.to ? new Date(p.to) : null;
+  var cats = p.categories && p.categories.length ? p.categories : null;
+  var min = Number(p.min) || 0, max = Number(p.max) || 0;
   var list = all.filter(function (t) {
+    if (from && t.date < from) return false;
+    if (to && t.date >= to) return false;
+    if (!acctMatch_(t, p.accounts)) return false;
+    if (cats && cats.indexOf(t.category) === -1) return false;
+    if (min && t.amount < min) return false;
+    if (max && t.amount > max) return false;
     if (filter === 'review' && t.status !== STATUS.REVIEW) return false;
     if (filter === 'expense' && (t.type !== TYPE.OUT || t.status !== STATUS.OK)) return false;
     if (filter === 'income' && (t.type !== TYPE.IN || t.status !== STATUS.OK)) return false;
@@ -196,6 +211,8 @@ function txList(p) {
   return {
     items: list.slice(offset, offset + limit).map(txOut_),
     total: list.length,
+    sumOut: sum_(list.filter(isOut_)),
+    sumIn: sum_(list.filter(isIn_)),
     reviewCount: all.filter(function (t) { return t.status === STATUS.REVIEW; }).length,
     week: { total: wk.total, count: wk.count, delta: wk.prev > 0 ? Math.round((wk.total - wk.prev) / wk.prev * 100) : null }
   };
@@ -204,7 +221,7 @@ function txList(p) {
 // ---------------- Insight ----------------
 
 function insightData(p) {
-  var all = txRows_();
+  var all = txRows_().filter(function (t) { return acctMatch_(t, p && p.accounts); });
   var b = monthBounds_(p && p.month);
   var now = new Date();
   var isCur = now >= b.start && now < b.end;
@@ -262,7 +279,7 @@ function insightData(p) {
 // ---------------- Rekap tahunan ----------------
 
 function yearData(p) {
-  var all = txRows_();
+  var all = txRows_().filter(function (t) { return acctMatch_(t, p && p.accounts); });
   var now = new Date();
   var y = Number(p && p.year) || now.getFullYear();
   var start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
@@ -417,9 +434,9 @@ function rupiah_(n) {
   return (v < 0 ? '-Rp' : 'Rp') + Math.abs(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-function sendWeeklyReview_() {
+function sendWeeklyReview_(opts) {
   var s = settings_();
-  if (s.weeklyReviewEnabled === false) return { sent: false, reason: 'disabled' };
+  if (s.weeklyReviewEnabled === false && !(opts && opts.force)) return { sent: false, reason: 'disabled' };
   var all = txRows_();
   var wk = weekSummary_(all);
   var home = homeData({});
@@ -437,6 +454,9 @@ function sendWeeklyReview_() {
     '',
     '— catat.id'
   ].filter(function (l, i, arr) { return l !== '' || (arr[i - 1] !== ''); });
-  MailApp.sendEmail({ to: to, subject: 'Review mingguan catat.id — ' + rupiah_(wk.total), body: lines.join('\n') });
-  return { sent: true };
+  var mail = { to: to, subject: 'Review mingguan catat.id — ' + rupiah_(wk.total), body: lines.join('\n') };
+  var cc = opts && opts.cc !== undefined ? opts.cc : String(s.weeklyReviewCc || '');
+  if (cc) mail.cc = cc;
+  MailApp.sendEmail(mail);
+  return { sent: true, to: to, cc: cc };
 }

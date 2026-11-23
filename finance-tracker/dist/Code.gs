@@ -111,6 +111,8 @@ var DEFAULT_SETTINGS = {
   monthlyBudget: 0,
   weeklyReviewEnabled: true,
   weeklyReviewHour: 16,
+  weeklyReviewDay: 0,
+  weeklyReviewCc: '',
   initialDaysBack: 30,
   autoCategorize: true
 };
@@ -1455,12 +1457,27 @@ function weekSummary_(all) {
 
 // ---------------- Daftar transaksi ----------------
 
+// Filter rekening dipakai Transaksi, Insight, dan Rekap. Transfer ikut kalau rekening asal atau tujuannya cocok.
+function acctMatch_(t, accounts) {
+  if (!accounts || !accounts.length) return true;
+  return accounts.indexOf(t.account) > -1 || (t.toAccount && accounts.indexOf(t.toAccount) > -1);
+}
+
 function txList(p) {
   p = p || {};
   var all = txRows_();
   var filter = p.filter || 'all';
   var q = String(p.q || '').toLowerCase().trim();
+  var from = p.from ? new Date(p.from) : null, to = p.to ? new Date(p.to) : null;
+  var cats = p.categories && p.categories.length ? p.categories : null;
+  var min = Number(p.min) || 0, max = Number(p.max) || 0;
   var list = all.filter(function (t) {
+    if (from && t.date < from) return false;
+    if (to && t.date >= to) return false;
+    if (!acctMatch_(t, p.accounts)) return false;
+    if (cats && cats.indexOf(t.category) === -1) return false;
+    if (min && t.amount < min) return false;
+    if (max && t.amount > max) return false;
     if (filter === 'review' && t.status !== STATUS.REVIEW) return false;
     if (filter === 'expense' && (t.type !== TYPE.OUT || t.status !== STATUS.OK)) return false;
     if (filter === 'income' && (t.type !== TYPE.IN || t.status !== STATUS.OK)) return false;
@@ -1479,6 +1496,8 @@ function txList(p) {
   return {
     items: list.slice(offset, offset + limit).map(txOut_),
     total: list.length,
+    sumOut: sum_(list.filter(isOut_)),
+    sumIn: sum_(list.filter(isIn_)),
     reviewCount: all.filter(function (t) { return t.status === STATUS.REVIEW; }).length,
     week: { total: wk.total, count: wk.count, delta: wk.prev > 0 ? Math.round((wk.total - wk.prev) / wk.prev * 100) : null }
   };
@@ -1487,7 +1506,7 @@ function txList(p) {
 // ---------------- Insight ----------------
 
 function insightData(p) {
-  var all = txRows_();
+  var all = txRows_().filter(function (t) { return acctMatch_(t, p && p.accounts); });
   var b = monthBounds_(p && p.month);
   var now = new Date();
   var isCur = now >= b.start && now < b.end;
@@ -1545,7 +1564,7 @@ function insightData(p) {
 // ---------------- Rekap tahunan ----------------
 
 function yearData(p) {
-  var all = txRows_();
+  var all = txRows_().filter(function (t) { return acctMatch_(t, p && p.accounts); });
   var now = new Date();
   var y = Number(p && p.year) || now.getFullYear();
   var start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
@@ -1700,9 +1719,9 @@ function rupiah_(n) {
   return (v < 0 ? '-Rp' : 'Rp') + Math.abs(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-function sendWeeklyReview_() {
+function sendWeeklyReview_(opts) {
   var s = settings_();
-  if (s.weeklyReviewEnabled === false) return { sent: false, reason: 'disabled' };
+  if (s.weeklyReviewEnabled === false && !(opts && opts.force)) return { sent: false, reason: 'disabled' };
   var all = txRows_();
   var wk = weekSummary_(all);
   var home = homeData({});
@@ -1720,8 +1739,11 @@ function sendWeeklyReview_() {
     '',
     '— catat.id'
   ].filter(function (l, i, arr) { return l !== '' || (arr[i - 1] !== ''); });
-  MailApp.sendEmail({ to: to, subject: 'Review mingguan catat.id — ' + rupiah_(wk.total), body: lines.join('\n') });
-  return { sent: true };
+  var mail = { to: to, subject: 'Review mingguan catat.id — ' + rupiah_(wk.total), body: lines.join('\n') };
+  var cc = opts && opts.cc !== undefined ? opts.cc : String(s.weeklyReviewCc || '');
+  if (cc) mail.cc = cc;
+  MailApp.sendEmail(mail);
+  return { sent: true, to: to, cc: cc };
 }
 
 
@@ -1929,6 +1951,9 @@ var API = {
       settings: {
         trackIncome: s.trackIncome !== false,
         weeklyReviewEnabled: s.weeklyReviewEnabled !== false,
+        weeklyReviewDay: Number(s.weeklyReviewDay) || 0,
+        weeklyReviewHour: s.weeklyReviewHour === '' || s.weeklyReviewHour === undefined ? 16 : Number(s.weeklyReviewHour),
+        weeklyReviewCc: String(s.weeklyReviewCc || ''),
         expectedIncome: Number(s.expectedIncome) || 0,
         allocNeed: Number(s.allocNeed) || 0,
         allocWant: Number(s.allocWant) || 0,
@@ -1955,6 +1980,7 @@ var API = {
     if (p.alloc) saveAllocation({ need: p.alloc.need, want: p.alloc.want, save: p.alloc.save });
     if (p.trackIncome !== undefined) setSetting_('trackIncome', !!p.trackIncome);
     if (p.weeklyReviewEnabled !== undefined) setSetting_('weeklyReviewEnabled', !!p.weeklyReviewEnabled);
+    if (p.weeklyReviewEnabled !== undefined) refreshWeeklyTrigger_();
     setSetting_('onboarded', true);
     ensureTriggers_();
     return { ok: true };
@@ -2010,6 +2036,19 @@ var API = {
 
   sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack, historyOnly: p && p.historyOnly }); },
   history: function () { return backfillInfo_(); },
+  saveWeekly: function (p) {
+    var day = Number(p.day), hour = Number(p.hour);
+    if (!(day >= 0 && day <= 6)) throw new Error('Hari tidak valid.');
+    if (!(hour >= 0 && hour <= 23)) throw new Error('Jam tidak valid.');
+    var cc = ccList_(p.cc);
+    setSetting_('weeklyReviewEnabled', !!p.enabled);
+    setSetting_('weeklyReviewDay', day);
+    setSetting_('weeklyReviewHour', hour);
+    setSetting_('weeklyReviewCc', cc.join(','));
+    refreshWeeklyTrigger_();
+    return { ok: true };
+  },
+  sendWeeklyNow: function (p) { return sendWeeklyReview_({ force: true, cc: p && p.cc !== undefined ? ccList_(p.cc).join(',') : undefined }); },
 
   home: function (p) { return homeData(p); },
   transactions: function (p) { return txList(p); },
@@ -2074,6 +2113,7 @@ var API = {
   },
   saveSettings: function (p) {
     ['trackIncome', 'weeklyReviewEnabled'].forEach(function (k) { if (p[k] !== undefined) setSetting_(k, !!p[k]); });
+    if (p.weeklyReviewEnabled !== undefined) refreshWeeklyTrigger_();
     if (p.theme !== undefined) {
       if (['biru', 'hijau', 'ungu', 'terakota', 'grafit'].indexOf(p.theme) === -1) throw new Error('Tema tidak dikenal.');
       setSetting_('theme', p.theme);
@@ -2092,6 +2132,13 @@ var API = {
     });
   }
 };
+
+function ccList_(v) {
+  var cc = String(v || '').split(/[,;\s]+/).filter(Boolean);
+  cc.forEach(function (e) { if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new Error('Email "' + e + '" tidak valid.'); });
+  if (cc.length > 3) throw new Error('Maksimal 3 email tambahan.');
+  return cc;
+}
 
 function maskEmail_(e) {
   var p = String(e).split('@');
@@ -2353,8 +2400,21 @@ function ensureTriggers_() {
     if (LEGACY_TRIGGER_HANDLERS.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('jejakSyncTrigger').timeBased().everyMinutes(SYNC_CONFIG.triggerMinutes).create();
-  ScriptApp.newTrigger('jejakWeeklyReview').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY)
-    .atHour(Number(settings_().weeklyReviewHour) || 16).create();
+  refreshWeeklyTrigger_();
+}
+
+var WEEKDAYS_ = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+// Pasang ulang pemicu review mingguan sesuai pilihan pengguna (hari, jam, aktif/mati).
+function refreshWeeklyTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'jejakWeeklyReview') ScriptApp.deleteTrigger(t);
+  });
+  var s = settings_();
+  if (s.weeklyReviewEnabled === false) return;
+  var day = Number(s.weeklyReviewDay); if (!(day >= 0 && day <= 6)) day = 0;
+  var hour = Number(s.weeklyReviewHour); if (!(hour >= 0 && hour <= 23)) hour = 16;
+  ScriptApp.newTrigger('jejakWeeklyReview').timeBased().onWeekDay(ScriptApp.WeekDay[WEEKDAYS_[day]]).atHour(hour).create();
 }
 
 function jejakSyncTrigger() {
