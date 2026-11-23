@@ -5,6 +5,7 @@
 
 var API = {
   bootstrap: function () {
+    ensureSetup_();
     var s = settings_();
     var email = '';
     try { email = Session.getEffectiveUser().getEmail(); } catch (e) {}

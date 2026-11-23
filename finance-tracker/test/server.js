@@ -1,6 +1,6 @@
 const http = require('http'), fs = require('fs');
 const { create, msg } = require('./gas');
-const SRC = require('path').join(__dirname, '..', 'apps-script') + '/';
+const SRC = require('path').join(__dirname, '..', process.env.DIST ? 'dist' : 'apps-script') + '/';
 const now = new Date();
 const d = (a, h = 12) => { const x = new Date(now); x.setDate(x.getDate() - a); x.setHours(h, 15, 0, 0); return x; };
 const fmt = x => `${x.getDate()} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][x.getMonth()]} ${x.getFullYear()} ${String(x.getHours()).padStart(2,'0')}:${String(x.getMinutes()).padStart(2,'0')} WIB`;
@@ -15,7 +15,7 @@ add('Bank Jago <noreply@jago.com>', 'Kamu menerima uang', `Kamu menerima transfe
 add('BCA <bca@bca.co.id>', 'Transaksi QRIS Berhasil', `Transaksi QRIS berhasil\nNama Merchant : SATE KHAS SENAYAN\nNominal : IDR 135,000.00\nTanggal: ${fmt(d(0,13))}`, d(0,13));
 add('BCA <bca@bca.co.id>', 'Transaksi Berhasil', `Transfer berhasil\nPenerima : ANDI WIJAYA\nNominal : IDR 300,000.00`, d(1,16));
 const g = create({ threads: [M] });
-g.setupApp();
+g.onOpen();
 const server = http.createServer((req, res) => {
   if (req.url === '/api') {
     let body = ''; req.on('data', c => body += c); req.on('end', () => {

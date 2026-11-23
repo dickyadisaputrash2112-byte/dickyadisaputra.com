@@ -14,7 +14,7 @@ function getSpreadsheet_() {
     var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
     if (id) ss = SpreadsheetApp.openById(id);
   }
-  if (!ss) throw new Error('Spreadsheet tidak ditemukan. Buka spreadsheet lalu jalankan menu catat.id → Setup.');
+  if (!ss) throw new Error('Spreadsheet tidak ditemukan. Buka spreadsheet lalu klik menu catat.id → ▶ Mulai / buka aplikasi.');
   _DB.ss = ss;
   return ss;
 }

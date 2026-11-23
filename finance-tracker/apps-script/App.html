@@ -1210,7 +1210,7 @@ function start() {
     else S.route = 'home';
     render();
   }).catch(function (e) {
-    document.getElementById('app').innerHTML = darkFrame('<h1 class="d-title">Ada yang<br><span>belum siap.</span></h1><p class="d-lede">' + esc(e.message) + '</p><p class="d-lede">Buka spreadsheet, lalu jalankan menu catat.id → Setup.</p>');
+    document.getElementById('app').innerHTML = darkFrame('<h1 class="d-title">Ada yang<br><span>belum siap.</span></h1><p class="d-lede">' + esc(e.message) + '</p><p class="d-lede">Buka spreadsheet catat.id, lalu klik menu catat.id → ▶ Mulai / buka aplikasi.</p>');
   });
 }
 start();

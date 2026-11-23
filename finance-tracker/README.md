@@ -11,7 +11,9 @@ Bagian di bawah ini untuk memasang ke spreadsheet kamu sendiri yang sudah berisi
 
 | Folder | Isi |
 |---|---|
-| `apps-script/` | Kode produk. Salin semua file ini ke proyek Apps Script spreadsheet. |
+| `dist/` | **Yang ditempel ke Apps Script**: `Code.gs`, `Index.html`, `appsscript.json`. Dibuat dari `apps-script/`. |
+| `apps-script/` | Kode sumber, dipecah per bagian supaya mudah diubah. Jangan ditempel langsung. |
+| `tools/build.js` | Menggabungkan `apps-script/` menjadi `dist/`. Jalankan `node tools/build.js` setiap kode berubah. |
 | `test/` | Simulator Apps Script untuk menguji kode di komputer (Node + Playwright). |
 | `mockup/` | Mockup HTML lama (versi hijau), hanya untuk arsip. |
 
@@ -21,30 +23,26 @@ Bagian di bawah ini untuk memasang ke spreadsheet kamu sendiri yang sudah berisi
 
 **1. Buka editor skrip.** Di spreadsheet: Ekstensi → Apps Script.
 
-**2. Hapus file lama.** Hapus semua file berikut (klik titik tiga di samping nama file → Hapus):
-
-- `Main.gs`, `Database.gs`, `PageServer.gs`, `RPC_Transactions_Extra.gs`, `GmailEngine.gs`
-- `Triggers.gs`, `WeeklyReviewService.gs`, `SetupService.gs`, `AccountService.gs`
-- `CategoryService.gs`, `MerchantService.gs`, `GoalService.gs`, `TransactionService.gs`, `Dashboard.gs`
-- `Config.gs` dan `Parsers.gs` versi lama (diganti yang baru)
-- Halaman HTML lama: `Dashboard`, `Transactions`, `Accounts`, `Goals`, `Merchants`, `Categories`, `Settings`, `Logs`
+**2. Hapus file lama.** Hapus semua file di daftar File (klik titik tiga di samping nama file → Hapus),
+sisakan satu file `.gs` saja dan ganti namanya menjadi `Code`. Kode lama tidak dipakai lagi.
 
 Sheet (tab) di spreadsheet **jangan** dihapus. Data lama tetap dipakai.
 
-**3. Tambahkan file baru.** Untuk setiap file di `apps-script/`, buat file dengan nama yang sama
-(tombol + → Skrip untuk `.gs`, + → HTML untuk `.html`, tanpa ekstensi), lalu tempel isinya:
+**3. Tempel 2 file.** Hanya dua file dari folder `dist/`:
 
-- Skrip: `Config`, `Db`, `Parsers`, `Transactions`, `Goals`, `Insights`, `Sync`, `Api`, `Code`, `Migration`
-- HTML: `Index`, `Styles`, `App`
+- `Code.gs`: hapus seluruh isi file Code/Kode yang ada, tempel isi `dist/Code.gs`.
+- `Index`: tombol + → HTML, beri nama `Index`, tempel isi `dist/Index.html`.
+
+Di GitHub, buka filenya lalu klik tombol **Copy raw file** (ikon salin di kanan atas isi file).
 
 **4. Ganti manifest.** Setelan proyek (ikon gerigi) → centang "Tampilkan file manifes appsscript.json".
-Buka `appsscript.json`, ganti isinya dengan file `apps-script/appsscript.json`.
+Buka `appsscript.json`, ganti isinya dengan file `dist/appsscript.json`.
 
 **5. Jalankan Setup.** Simpan, lalu muat ulang spreadsheet. Akan muncul menu **catat.id**.
-Klik catat.id → 1. Setup. Izinkan akses (Sheets, Gmail baca, kirim email review).
+Klik catat.id → ▶ Mulai / buka aplikasi. Izinkan akses (Sheets, Gmail, kirim email review), lalu klik sekali lagi.
 Setup membuat sheet yang belum ada, menambah kolom baru di kanan, dan memasang pemicu sinkron tiap 15 menit.
 
-**6. Terbitkan aplikasi web.** Di editor: Terapkan → Penerapan baru → Jenis: Aplikasi web.
+**6. Terbitkan aplikasi web** (lewati kalau dialog ▶ Mulai sudah menampilkan link). Di editor: Terapkan → Penerapan baru → Jenis: Aplikasi web.
 Jalankan sebagai: Saya. Yang punya akses: Hanya saya. Klik Terapkan, salin URL-nya.
 Buka URL itu di HP, lalu "Tambahkan ke Layar Utama" supaya terasa seperti aplikasi.
 

@@ -1,6 +1,6 @@
 // Mock Google Apps Script runtime, loads all .gs into one VM context
 const fs = require('fs'), path = require('path'), vm = require('vm'), crypto = require('crypto');
-const SRC = require('path').join(__dirname, '..', 'apps-script');
+const SRC = require('path').join(__dirname, '..', process.env.DIST ? 'dist' : 'apps-script');
 
 function makeSheet(name) {
   const data = []; // array of rows

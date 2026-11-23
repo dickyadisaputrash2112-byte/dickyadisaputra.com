@@ -20,14 +20,14 @@ function include(name) {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('catat.id')
-    .addItem('1. Setup', 'menuSetup')
-    .addItem('2. Buka aplikasi', 'menuOpenApp')
+    .addItem('▶ Mulai / buka aplikasi', 'menuStart')
     .addSeparator()
     .addItem('Sinkronkan email sekarang', 'menuSync')
     .addItem('Bersihkan data lama — pratinjau', 'menuCleanupPreview')
     .addItem('Bersihkan data lama — jalankan', 'menuCleanupRun')
     .addItem('Kirim review mingguan sekarang', 'menuWeekly')
     .addItem('Reset PIN aplikasi', 'menuResetPin')
+    .addItem('Setup ulang', 'menuSetup')
     .addToUi();
   try { ensureStartSheet_(SpreadsheetApp.getActiveSpreadsheet()); } catch (e) {}
 }
@@ -42,16 +42,15 @@ function ensureStartSheet_(ss) {
   var rows = [
     ['catat.id — catat uangmu tanpa mencatat'],
     [''],
-    ['Pasang sekali, sekitar 10 menit, dari laptop:'],
-    ['1. Klik menu catat.id → 1. Setup (di baris menu atas, sebelah Bantuan).'],
-    ['   Saat muncul "Google belum memverifikasi aplikasi ini": klik Lanjutan → Buka catat.id (tidak aman) → Pilih semua → Lanjutkan.'],
-    ['   Lalu klik lagi catat.id → 1. Setup sampai muncul pesan "catat.id siap".'],
-    ['2. Klik catat.id → 2. Buka aplikasi, lalu ikuti petunjuk untuk menerbitkan aplikasi web.'],
-    ['3. Buka link aplikasi (berakhiran /exec) di HP, login dengan akun Google ini, lalu Tambahkan ke Layar Utama.'],
-    ['4. Isi nama di rekening, pilih bank, dan atur PIN. Selesai — transaksi tercatat otomatis tiap 15 menit.'],
+    ['Pasang sekali, sekitar 5 menit, dari laptop:'],
+    ['1. Klik menu catat.id → ▶ Mulai / buka aplikasi (di baris menu atas, sebelah Bantuan).'],
+    ['   Pertama kali, Google meminta izin: Lanjutkan → pilih akunmu → Lanjutan → Buka catat.id (tidak aman) → Pilih semua → Lanjutkan.'],
+    ['   Setelah izin diberikan, klik ▶ Mulai / buka aplikasi sekali lagi.'],
+    ['2. Muncul link aplikasimu. Kirim ke HP, buka dengan akun Google yang sama, lalu Tambahkan ke Layar Utama.'],
+    ['3. Isi nama di rekening, pilih bank, dan atur PIN. Selesai — transaksi tercatat otomatis tiap 15 menit.'],
     [''],
     ['Data kamu tersimpan di spreadsheet ini, di Google Drive kamu sendiri. Tidak dikirim ke penjual.'],
-    ['Panduan lengkap ada di PDF yang kamu terima setelah membeli.']
+    ['Butuh bantuan? Hubungi nomor WhatsApp di email pembelianmu.']
   ];
   sh.getRange(1, 1, rows.length, 1).setValues(rows);
   sh.getRange(1, 1).setFontSize(16).setFontWeight('bold');
@@ -65,11 +64,26 @@ function menuResetPin() {
   SpreadsheetApp.getUi().alert('PIN dihapus. Buka aplikasi dan atur PIN baru di Profil.');
 }
 
+// Satu tombol untuk pembeli: pasang (kalau belum) lalu tampilkan link aplikasi.
+function menuStart() {
+  ensureSetup_();
+  menuOpenApp();
+}
+
+// Setup otomatis sekali per versi. Dipanggil dari menu dan saat aplikasi dibuka,
+// jadi pembeli tidak perlu menjalankan Setup terpisah.
+function ensureSetup_() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('CATAT_SETUP_VERSION') === APP.version && sheet_(SHEET.SETTINGS).getLastRow() > 1) return false;
+  setupApp();
+  return true;
+}
+
 function menuSetup() {
   var r = setupApp();
   SpreadsheetApp.getUi().alert('catat.id siap',
     'Sheet, kategori, dan sinkron otomatis tiap 15 menit sudah terpasang.\n\n' +
-    'Langkah berikutnya: klik menu catat.id → 2. Buka aplikasi.' +
+    'Langkah berikutnya: klik menu catat.id → ▶ Mulai / buka aplikasi.' +
     (r.notes.length ? '\n\n' + r.notes.join('\n') : ''),
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
@@ -142,6 +156,7 @@ function setupApp() {
   ensureTriggers_();
   invalidate_();
   _DB.settings = null; _DB.categories = null; _DB.accounts = null;
+  PropertiesService.getScriptProperties().setProperty('CATAT_SETUP_VERSION', APP.version);
   if (!ownerList_().length && txRows_().length) notes.push('Isi "Nama di rekening" di aplikasi, lalu jalankan "Bersihkan data lama" supaya transfer ke rekening sendiri tidak dihitung pengeluaran.');
   return { ok: true, notes: notes };
 }
