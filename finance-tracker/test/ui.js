@@ -29,7 +29,7 @@ const { chromium } = require('playwright');
   await click('.trow[data-act=detail]'); await p.waitForTimeout(700); await shot('15-detail');
   await click('[data-act=detCat]:nth-of-type(3)'); await click('[data-act=detSave]'); await p.waitForTimeout(600);
   await click('[data-act=txSearch]'); await p.type('#tx-q', 'kopi'); await p.waitForTimeout(1200); await shot('16-tx-search');
-  await click('.nav .add'); await p.fill('#add-text', 'nasi goreng 25rb tunai'); await p.dispatchEvent('#add-text', 'input'); await shot('17-add');
+  await click('.fab'); await p.fill('#add-text', 'nasi goreng 25rb tunai'); await p.dispatchEvent('#add-text', 'input'); await shot('17-add');
   await click('#add-save'); await p.waitForTimeout(700);
   await click('[data-act=go][data-r=insight]'); await p.waitForTimeout(800); await shot('18-insight');
   await click('[data-act=go][data-r=me]'); await p.waitForTimeout(800); await shot('19-me');
@@ -48,6 +48,19 @@ const { chromium } = require('playwright');
   await p.evaluate(() => sessionStorage.clear()); await p.reload(); await p.waitForTimeout(900); await shot('28-lock');
   for (const k of '123456') await click(`[data-act=pinKey][data-v="${k}"]`);
   await p.waitForTimeout(900); await shot('29-after-unlock');
+  // tema + desktop
+  await click('[data-act=go][data-r=me]'); await p.waitForTimeout(700);
+  await click('[data-act=setTheme][data-v=hijau]'); await p.waitForTimeout(500); await shot('30-theme-hijau');
+  await p.setViewportSize({ width: 1440, height: 900 });
+  await click('[data-act=go][data-r=home]'); await p.waitForTimeout(900); await shot('31-desk-home');
+  await click('[data-act=setTheme]').catch(() => {});
+  await click('[data-act=go][data-r=tx]'); await p.waitForTimeout(800); await shot('32-desk-tx');
+  await click('[data-act=go][data-r=insight]'); await p.waitForTimeout(800); await shot('33-desk-insight');
+  await click('[data-act=go][data-r=me]'); await p.waitForTimeout(800);
+  await click('[data-act=setTheme][data-v=biru]'); await p.waitForTimeout(500); await shot('34-desk-me');
+  await click('.fab'); await p.fill('#add-text', 'kopi 18rb gopay'); await p.dispatchEvent('#add-text', 'input'); await shot('35-desk-quick');
+  await p.keyboard.press('Escape');
+  console.log('desk overflow', await p.evaluate(() => document.documentElement.scrollWidth));
   const errors = await p.evaluate(() => window.__errors);
   console.log('errors', JSON.stringify(errs.concat(errors)));
   // horizontal overflow check

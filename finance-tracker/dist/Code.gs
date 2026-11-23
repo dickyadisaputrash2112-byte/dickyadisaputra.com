@@ -98,6 +98,7 @@ var DEFAULT_SETTINGS = {
   nickname: '',
   ownerNames: '',
   onboarded: false,
+  theme: 'biru',
   trackIncome: true,
   expectedIncome: 0,
   allocNeed: 50,
@@ -1786,7 +1787,8 @@ var API = {
         expectedIncome: Number(s.expectedIncome) || 0,
         allocNeed: Number(s.allocNeed) || 0,
         allocWant: Number(s.allocWant) || 0,
-        allocSave: Number(s.allocSave) || 0
+        allocSave: Number(s.allocSave) || 0,
+        theme: String(s.theme || 'biru')
       },
       accounts: accounts_().map(function (a) { return { name: a.name, mode: a.mode, color: a.color, abbr: a.abbr, kind: a.kind, active: a.active }; }),
       categories: categories_().filter(function (c) { return c.active; }).map(function (c) { return { name: c.name, key: c.key, color: c.color, group: c.group, keywords: c.keywords }; }),
@@ -1891,6 +1893,10 @@ var API = {
   },
   saveSettings: function (p) {
     ['trackIncome', 'weeklyReviewEnabled'].forEach(function (k) { if (p[k] !== undefined) setSetting_(k, !!p[k]); });
+    if (p.theme !== undefined) {
+      if (['biru', 'hijau', 'ungu', 'terakota', 'grafit'].indexOf(p.theme) === -1) throw new Error('Tema tidak dikenal.');
+      setSetting_('theme', p.theme);
+    }
     if (p.expectedIncome !== undefined) setSetting_('expectedIncome', Math.max(0, Math.round(Number(p.expectedIncome) || 0)));
     return { ok: true };
   },

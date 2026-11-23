@@ -97,6 +97,7 @@ var DEFAULT_SETTINGS = {
   nickname: '',
   ownerNames: '',
   onboarded: false,
+  theme: 'biru',
   trackIncome: true,
   expectedIncome: 0,
   allocNeed: 50,
