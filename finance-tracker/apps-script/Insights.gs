@@ -133,7 +133,8 @@ function homeData(p) {
     reviewCount: all.filter(function (t) { return t.status === STATUS.REVIEW; }).length,
     week: weekSummary_(all),
     savingThisMonth: savingThisMonth,
-    lastSync: lastSyncIso_()
+    lastSync: lastSyncIso_(),
+    history: backfillInfo_()
   };
 }
 
@@ -333,7 +334,8 @@ function yearData(p) {
     manualCount: rows.length - auto,
     minutesSaved: auto,
     spendDays: Object.keys(days).length,
-    goalSaved: saved
+    goalSaved: saved,
+    history: backfillInfo_()
   };
 }
 

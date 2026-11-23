@@ -877,11 +877,13 @@ VIEWS.home = function () {
   var d = need('home:' + m, 'home', { month: m });
   var greetHtml = '';
   var hdr = '<header class="hdr" style="align-items:flex-start"><div style="flex:1;min-width:0"><h1 style="margin:0;text-align:left;font-size:26px;line-height:1.2;font-weight:500;letter-spacing:-.03em;color:var(--ink-2)">' + greet() + ', <b style="font-weight:800;color:var(--ink)">' + esc(nick()) + '!</b></h1>' +
-    '<div class="small muted" style="margin-top:6px;font-weight:600">Tersinkron ' + ago(d && d.lastSync) + '</div></div>' +
+    '<div class="small muted" style="margin-top:6px;font-weight:600">Tersinkron ' + ago(d && d.lastSync) + '</div>' + (d && d.history ? historyLine(d.history) : '') + '</div>' +
     '<button class="cbtn" data-act="syncNow" aria-label="Sinkronkan sekarang">' + (S.busy ? '<span class="spin" style="width:18px;height:18px"></span>' : ic('sync')) + '</button>' +
     '<button class="avatar" data-act="go" data-r="me" aria-label="Profil">' + esc(nick().charAt(0).toUpperCase()) + '</button></header>';
   if (!d) return frame(hdr + greetHtml + loading('Menyiapkan ringkasan…'), { nav: 'home' });
   if (d.__error) return frame(hdr + errBox(d), { nav: 'home' });
+  // Lengkapi riwayat sejak 1 Januari otomatis selama aplikasi terbuka (sekali per sesi).
+  if (d.history && !d.history.done && d.history.target && !S.histAuto) { S.histAuto = true; setTimeout(historyRun, 1500); }
 
   var hasBudget = d.budget > 0;
   var pct = hasBudget ? Math.min(100, d.spent / d.budget * 100) : 0;
@@ -1199,6 +1201,34 @@ VIEWS.insight = function () {
     (merchants ? '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Merchant teratas</h2></div>' + merchants + '</section>' : '') + '</div></div>', { nav: 'insight' });
 };
 
+/* ---------------- Riwayat sejak 1 Januari ---------------- */
+function historyLine(h) {
+  if (!h || h.done || !h.target) return '';
+  var c = h.cursor ? new Date(h.cursor) : null;
+  return '<div class="small" style="margin-top:4px;font-weight:700;color:var(--ink-2)">' + (S.histBusy ? '<span class="spin" style="display:inline-block;width:11px;height:11px;border-width:2px;vertical-align:-1px;margin-right:6px"></span>' : '') +
+    'Mengambil riwayat sejak 1 Jan' + (c ? ': sudah sampai ' + c.getDate() + ' ' + MONTHS[c.getMonth()].slice(0, 3) : '') +
+    (S.histBusy ? '' : ' · <button class="link" data-act="historyRun" style="font-size:12px">Percepat</button>') + '</div>';
+}
+function historyCard(h) {
+  if (!h || h.done || !h.target) return '';
+  var c = h.cursor ? new Date(h.cursor) : null;
+  return '<section class="glass pad-s" style="display:flex;gap:12px;align-items:center;border-radius:26px;border-style:dashed"><span style="width:40px;height:40px;border-radius:99px;background:var(--orange);color:var(--orange-ink);display:grid;place-items:center;flex-shrink:0">' + (S.histBusy ? '<span class="spin" style="width:18px;height:18px"></span>' : ic('sync', 'ic-s')) + '</span>' +
+    '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.5;color:var(--ink-2)"><b style="color:var(--ink)">Riwayat sejak 1 Januari sedang diambil.</b> ' + (c ? 'Data lengkap mulai ' + c.getDate() + ' ' + MONTHS[c.getMonth()] + '. ' : '') +
+    (S.histBusy ? 'Membaca email lama… biarkan halaman ini terbuka.' : 'Berjalan otomatis tiap jam, atau percepat sekarang.') + '</div>' +
+    (S.histBusy ? '' : '<button class="btn btn-dark" data-act="historyRun" style="width:auto;height:44px;padding:0 16px;font-size:13px">Percepat</button>') + '</section>';
+}
+// Ambil riwayat terus-menerus selama halaman Beranda / Rekap masih terbuka.
+function historyRun() {
+  if (S.histBusy) return;
+  S.histBusy = true; render();
+  api('sync', { historyOnly: true }).then(function (r) {
+    S.histBusy = false;
+    invalidate('home', 'year', 'insight', 'tx', 'alloc');
+    if (r.backfill && !r.backfill.done && r.ok !== false && (S.route === 'year' || S.route === 'home')) { render(); setTimeout(historyRun, 300); }
+    else { if (r.backfill && r.backfill.done) toast('Riwayat sejak 1 Januari lengkap'); render(); }
+  }).catch(function (e) { S.histBusy = false; toast(e.message); render(); });
+}
+
 /* ================================================================
    REKAP TAHUNAN
    ================================================================ */
@@ -1210,7 +1240,8 @@ VIEWS.year = function () {
     '<button class="cbtn" data-act="yearShift" data-v="1" aria-label="Tahun berikutnya"' + (y >= new Date().getFullYear() ? ' disabled style="opacity:.4"' : '') + '>' + ic('right') + '</button></span>');
   if (!d) return frame(hdr + loading('Menghitung setahun…'), { wide: true });
   if (d.__error) return frame(hdr + errBox(d), { wide: true });
-  if (!d.count) return frame(hdr + '<div class="glass empty"><b>Belum ada catatan di ' + y + '</b>Rekap muncul setelah transaksi tercatat.</div>', { wide: true });
+  var hist = d.history && d.history.target && new Date(d.history.target).getFullYear() <= y ? historyCard(d.history) : '';
+  if (!d.count) return frame(hdr + hist + '<div class="glass empty"><b>Belum ada catatan di ' + y + '</b>Rekap muncul setelah transaksi tercatat.</div>', { wide: true });
 
   var hours = Math.floor(d.minutesSaved / 60), mins = d.minutesSaved % 60;
   var saveTime = hours ? hours + ' jam' + (mins ? ' ' + mins + ' menit' : '') : mins + ' menit';
@@ -1266,7 +1297,7 @@ VIEWS.year = function () {
     return '<div class="trow">' + logo(a.name, 36) + '<span class="tmain"><span class="ttitle">' + esc(a.name) + '</span></span><span class="tamt"><b>' + short(a.amount) + '</b></span></div>';
   }).join('');
 
-  return frame(hdr + '<div class="cols"><div class="col">' + hero + flow + chart + split + '</div><div class="col">' + highlights +
+  return frame(hdr + hist + '<div class="cols"><div class="col">' + hero + flow + chart + split + '</div><div class="col">' + highlights +
     '<div class="sec-head"><h2>Kategori terbesar</h2></div><div class="cat-grid">' + cats + '</div>' +
     '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Merchant teratas</h2></div>' + merchants + '</section>' +
     (accts ? '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Keluar per rekening</h2></div>' + accts + '</section>' : '') +
@@ -1475,6 +1506,7 @@ var ACT = {
       S.busy = false; S.boot.hasPin = false; S.pin = ''; S.pinFirst = ''; go('pinReset', {}, true);
     }).catch(function (e) { S.busy = false; F.err = e.message; F.code = ''; render(); });
   },
+  historyRun: historyRun,
   openYear: function () { S.year = new Date().getFullYear(); go('year'); },
   yearShift: function (ds) { S.year = (S.year || new Date().getFullYear()) + Number(ds.v); render(); },
   printYear: function () { window.print(); },

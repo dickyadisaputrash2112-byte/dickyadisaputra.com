@@ -8,6 +8,8 @@ function processedMap_() {
   var t = table_(SHEET.PROCESSED);
   var j = t.idx.EmailID;
   t.rows.forEach(function (r) { if (r[j]) map[String(r[j])] = true; });
+  // Email yang sudah jadi transaksi juga dilewati, walaupun catatan ProcessedEmails-nya sudah terpangkas.
+  txRows_().forEach(function (x) { if (x.emailId) map[x.emailId] = true; });
   return map;
 }
 
@@ -68,42 +70,97 @@ function processMessage_(msg, processed, ctx, stats) {
   }
 }
 
+// Satu jendela pencarian Gmail [from, to). Mengembalikan true kalau selesai, false kalau terpotong batas waktu/jumlah.
+function syncWindow_(from, to, run) {
+  var tz = Session.getScriptTimeZone();
+  var q = senderQuery_() + ' after:' + Utilities.formatDate(new Date(from.getTime() - 86400000), tz, 'yyyy/MM/dd') +
+    (to ? ' before:' + Utilities.formatDate(new Date(to.getTime() + 86400000), tz, 'yyyy/MM/dd') : '') + ' -in:spam -in:trash';
+  var start = 0;
+  while (true) {
+    var threads = GmailApp.search(q, start, SYNC_CONFIG.searchBatch);
+    if (!threads.length) return true;
+    run.stats.threads += threads.length;
+    for (var i = 0; i < threads.length; i++) {
+      var msgs = threads[i].getMessages();
+      for (var j = 0; j < msgs.length; j++) {
+        var d = msgs[j].getDate();
+        if (d < from || (to && d >= to)) continue;
+        processMessage_(msgs[j], run.processed, run.ctx, run.stats);
+        if (run.stats.messages >= SYNC_CONFIG.maxMessagesPerRun || Date.now() > run.deadline) return false;
+      }
+    }
+    if (threads.length < SYNC_CONFIG.searchBatch) return true;
+    start += threads.length;
+  }
+}
+
+// Riwayat: mundur per 30 hari sampai 1 Januari tahun mulai memakai, supaya Rekap tahunan lengkap.
+function backfillState_() {
+  var p = PropertiesService.getScriptProperties();
+  var target = p.getProperty(SYNC_CONFIG.backfillTargetProp);
+  var cursor = p.getProperty(SYNC_CONFIG.backfillCursorProp);
+  return {
+    target: target ? new Date(target) : null,
+    cursor: cursor ? new Date(cursor) : null,
+    done: !!(target && cursor && new Date(cursor) <= new Date(target))
+  };
+}
+
+function backfillStep_(run) {
+  var p = PropertiesService.getScriptProperties();
+  var st = backfillState_();
+  if (!st.target) {
+    var y = new Date().getFullYear();
+    st.target = new Date(y, 0, 1);
+    p.setProperty(SYNC_CONFIG.backfillTargetProp, st.target.toISOString());
+  }
+  if (!st.cursor) st.cursor = new Date(Date.now() - (Number(settings_().initialDaysBack) || 30) * 86400000);
+  while (st.cursor > st.target && Date.now() < run.deadline && run.stats.messages < SYNC_CONFIG.maxMessagesPerRun) {
+    var from = new Date(Math.max(st.target.getTime(), st.cursor.getTime() - 30 * 86400000));
+    if (!syncWindow_(from, st.cursor, run)) break;
+    st.cursor = from;
+    p.setProperty(SYNC_CONFIG.backfillCursorProp, st.cursor.toISOString());
+  }
+  if (!p.getProperty(SYNC_CONFIG.backfillCursorProp)) p.setProperty(SYNC_CONFIG.backfillCursorProp, st.cursor.toISOString());
+  run.stats.backfill = backfillInfo_();
+}
+
+function backfillInfo_() {
+  var st = backfillState_();
+  return { target: st.target ? st.target.toISOString() : '', cursor: st.cursor ? st.cursor.toISOString() : '', done: st.done };
+}
+
 // opts.daysBack: paksa jangkauan hari (dipakai sinkron pertama)
+// opts.historyOnly: hanya lanjutkan pengambilan riwayat
 function syncTransactions(opts) {
   opts = opts || {};
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return { ok: false, message: 'Sinkronisasi lain sedang berjalan.' };
   var props = PropertiesService.getScriptProperties();
   var stats = { threads: 0, messages: 0, saved: 0, review: 0, skipped: 0, errors: 0, byAccount: {} };
+  var run = { stats: stats, processed: processedMap_(), ctx: syncContext_(), deadline: Date.now() + SYNC_CONFIG.maxRunMs };
   try {
-    var last = props.getProperty(SYNC_CONFIG.lastSyncProp);
-    var after;
-    if (opts.daysBack) after = new Date(Date.now() - Number(opts.daysBack) * 86400000);
-    else if (last) after = new Date(new Date(last).getTime() - 2 * 86400000);
-    else after = new Date(Date.now() - (Number(settings_().initialDaysBack) || 30) * 86400000);
-
-    var query = senderQuery_() + ' after:' + Utilities.formatDate(after, Session.getScriptTimeZone(), 'yyyy/MM/dd') + ' -in:spam -in:trash';
-    var processed = processedMap_();
-    var ctx = syncContext_();
-    var start = 0, done = false, started = Date.now();
-
-    while (!done) {
-      var threads = GmailApp.search(query, start, SYNC_CONFIG.searchBatch);
-      if (!threads.length) break;
-      stats.threads += threads.length;
-      for (var i = 0; i < threads.length && !done; i++) {
-        var msgs = threads[i].getMessages();
-        for (var j = 0; j < msgs.length; j++) {
-          if (msgs[j].getDate() < after) continue;
-          processMessage_(msgs[j], processed, ctx, stats);
-          if (stats.messages >= SYNC_CONFIG.maxMessagesPerRun || Date.now() - started > 4 * 60 * 1000) { done = true; break; }
-        }
-      }
-      if (threads.length < SYNC_CONFIG.searchBatch) break;
-      start += threads.length;
+    if (!opts.historyOnly) {
+      var last = props.getProperty(SYNC_CONFIG.lastSyncProp);
+      var after;
+      if (opts.daysBack) after = new Date(Date.now() - Number(opts.daysBack) * 86400000);
+      else if (last) after = new Date(new Date(last).getTime() - 2 * 86400000);
+      else after = new Date(Date.now() - (Number(settings_().initialDaysBack) || 30) * 86400000);
+      var began = new Date();
+      // Kalau terpotong, jangan majukan penanda: sisanya diambil di putaran berikutnya.
+      if (syncWindow_(after, null, run)) props.setProperty(SYNC_CONFIG.lastSyncProp, began.toISOString());
+    }
+    // Sinkron pertama (daysBack) dibuat cepat; riwayat diambil di putaran berikutnya.
+    // Dari pemicu otomatis: paling sering sejam sekali, maksimal 3 menit, supaya kuota harian Google aman.
+    var lastHist = Number(props.getProperty('CATAT_HISTORY_LAST_RUN') || 0);
+    if (opts.daysBack || backfillState_().done) stats.backfill = backfillInfo_();
+    else if (opts.fromTrigger && Date.now() - lastHist < 55 * 60000) stats.backfill = backfillInfo_();
+    else {
+      if (opts.fromTrigger) run.deadline = Math.min(run.deadline, Date.now() + 3 * 60000);
+      props.setProperty('CATAT_HISTORY_LAST_RUN', String(Date.now()));
+      backfillStep_(run);
     }
 
-    props.setProperty(SYNC_CONFIG.lastSyncProp, new Date().toISOString());
     var message = 'Pesan ' + stats.messages + ', tersimpan ' + stats.saved + ', perlu dicek ' + stats.review + ', error ' + stats.errors + '.';
     if (stats.saved || stats.errors) {
       append_(SHEET.SYNC_LOGS, { Timestamp: new Date(), Status: stats.errors ? 'PARTIAL' : 'SUCCESS', Message: message, ThreadsScanned: stats.threads, MessagesScanned: stats.messages, MessagesParsed: stats.saved, MessagesSkipped: stats.skipped, TransactionsSaved: stats.saved, Errors: stats.errors });
@@ -113,7 +170,7 @@ function syncTransactions(opts) {
     trimSheet_(SHEET.PROCESSED, SYNC_CONFIG.keepProcessedRows);
     stats.ok = true;
     stats.message = message;
-    stats.lastSync = new Date().toISOString();
+    stats.lastSync = props.getProperty(SYNC_CONFIG.lastSyncProp) || '';
     return stats;
   } catch (e) {
     try { append_(SHEET.SYNC_LOGS, { Timestamp: new Date(), Status: 'ERROR', Message: e.message }); } catch (e2) {}

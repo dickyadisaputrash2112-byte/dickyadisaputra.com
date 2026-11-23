@@ -30,6 +30,7 @@ var API = {
       catalog: SOURCES.map(function (s2) { return { name: s2.name, abbr: s2.abbr, color: s2.color, mode: s2.mode, kind: s2.kind }; }),
       spreadsheetUrl: getSpreadsheet_().getUrl(),
       lastSync: lastSyncIso_(),
+      history: backfillInfo_(),
       txCount: txRows_().length
     };
   },
@@ -97,7 +98,8 @@ var API = {
     return { ok: true };
   },
 
-  sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack }); },
+  sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack, historyOnly: p && p.historyOnly }); },
+  history: function () { return backfillInfo_(); },
 
   home: function (p) { return homeData(p); },
   transactions: function (p) { return txList(p); },

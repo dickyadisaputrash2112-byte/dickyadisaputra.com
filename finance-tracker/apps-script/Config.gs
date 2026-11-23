@@ -114,13 +114,16 @@ var DEFAULT_SETTINGS = {
 };
 
 var SYNC_CONFIG = {
-  maxMessagesPerRun: 200,
+  maxMessagesPerRun: 400,
+  maxRunMs: 4.5 * 60 * 1000,
   searchBatch: 50,
   triggerMinutes: 15,
-  keepProcessedRows: 6000,
+  keepProcessedRows: 15000,
   keepParserLogRows: 2000,
   keepSyncLogRows: 500,
-  lastSyncProp: 'GMAIL_ENGINE_LAST_SYNC_AT'
+  lastSyncProp: 'GMAIL_ENGINE_LAST_SYNC_AT',
+  backfillTargetProp: 'CATAT_HISTORY_FROM',
+  backfillCursorProp: 'CATAT_HISTORY_CURSOR'
 };
 
 // Nama fungsi pemicu lama yang dibersihkan saat setup.

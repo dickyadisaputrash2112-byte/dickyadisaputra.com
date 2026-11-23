@@ -239,7 +239,7 @@ function ensureTriggers_() {
 }
 
 function jejakSyncTrigger() {
-  syncTransactions({});
+  syncTransactions({ fromTrigger: true });
 }
 
 function jejakWeeklyReview() {
