@@ -1,0 +1,181 @@
+// ============================================================
+// Code.gs — Web app, menu spreadsheet, setup, dan pemicu
+// ============================================================
+
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle(APP.name)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    .addMetaTag('mobile-web-app-capable', 'yes')
+    .addMetaTag('apple-mobile-web-app-capable', 'yes');
+}
+
+function include(name) {
+  return HtmlService.createHtmlOutputFromFile(name).getContent();
+}
+
+// ---------------- Menu di spreadsheet ----------------
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Jejak')
+    .addItem('1. Setup / perbarui', 'menuSetup')
+    .addItem('2. Buka aplikasi', 'menuOpenApp')
+    .addSeparator()
+    .addItem('Sinkronkan email sekarang', 'menuSync')
+    .addItem('Bersihkan data lama — pratinjau', 'menuCleanupPreview')
+    .addItem('Bersihkan data lama — jalankan', 'menuCleanupRun')
+    .addItem('Kirim review mingguan sekarang', 'menuWeekly')
+    .addItem('Reset PIN aplikasi', 'menuResetPin')
+    .addToUi();
+}
+
+function menuResetPin() {
+  PropertiesService.getUserProperties().deleteProperty('JEJAK_PIN');
+  SpreadsheetApp.getUi().alert('PIN dihapus. Buka aplikasi dan atur PIN baru di Profil.');
+}
+
+function menuSetup() {
+  var r = setupApp();
+  SpreadsheetApp.getUi().alert('Jejak siap',
+    'Sheet, kategori, dan pemicu otomatis sudah diperbarui.\n\n' +
+    'Langkah berikutnya: Deploy → New deployment → Web app (Execute as: Me, Who has access: Only myself), ' +
+    'lalu buka link-nya dari HP.\n\n' + r.notes.join('\n'),
+    SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function menuOpenApp() {
+  var url = '';
+  try { url = ScriptApp.getService().getUrl(); } catch (e) {}
+  var html = url
+    ? '<p style="font-family:sans-serif">Buka aplikasi:<br><a href="' + url + '" target="_blank">' + url + '</a></p><p style="font-family:sans-serif;font-size:12px;color:#555">Simpan link ini di layar utama HP: buka di Chrome/Safari → Tambahkan ke Layar Utama.</p>'
+    : '<p style="font-family:sans-serif">Aplikasi belum di-deploy. Buka Ekstensi → Apps Script → Deploy → New deployment → Web app.</p>';
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(420).setHeight(160), 'Aplikasi Jejak');
+}
+
+function menuSync() {
+  var r = syncTransactions({});
+  SpreadsheetApp.getUi().alert(r.ok ? 'Sinkronisasi selesai' : 'Sinkronisasi gagal', r.message || '', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function menuCleanupPreview() {
+  var r = cleanupLegacy(true);
+  SpreadsheetApp.getUi().alert('Pratinjau pembersihan (belum ada yang diubah)', cleanupSummary_(r), SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function menuCleanupRun() {
+  var ui = SpreadsheetApp.getUi();
+  var preview = cleanupLegacy(true);
+  var ok = ui.alert('Jalankan pembersihan?', cleanupSummary_(preview) + '\n\nSalin spreadsheet dulu sebagai cadangan (File → Buat salinan) kalau belum.', ui.ButtonSet.OK_CANCEL);
+  if (ok !== ui.Button.OK) return;
+  var r = cleanupLegacy(false);
+  ui.alert('Pembersihan selesai', cleanupSummary_(r), ui.ButtonSet.OK);
+}
+
+function menuWeekly() {
+  var r = sendWeeklyReview_();
+  SpreadsheetApp.getUi().alert(r.sent ? 'Review mingguan terkirim ke email kamu.' : 'Tidak terkirim: ' + r.reason);
+}
+
+// ---------------- Setup ----------------
+
+function setupApp() {
+  var notes = [];
+  fixProcessedHeader_();
+  invalidate_();
+  Object.keys(HEADERS).forEach(function (n) { table_(n); });
+  ensureCategories_(notes);
+  ensureAccounts_(notes);
+  ensureDefaultSettings_();
+  ensureTriggers_();
+  invalidate_();
+  _DB.settings = null; _DB.categories = null; _DB.accounts = null;
+  if (!ownerList_().length) notes.push('Isi "Nama di rekening" di aplikasi, lalu jalankan "Bersihkan data lama" supaya transfer ke rekening sendiri tidak dihitung pengeluaran.');
+  return { ok: true, notes: notes };
+}
+
+// Versi lama menulis kolom ProcessedEmails dengan urutan berbeda. Samakan judulnya.
+function fixProcessedHeader_() {
+  var sh = sheet_(SHEET.PROCESSED);
+  var lastCol = Math.max(sh.getLastColumn(), 1);
+  var h = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (String(h[1] || '').trim() !== 'ProcessedAt') {
+    sh.getRange(1, 1, 1, lastCol).clearContent();
+    sh.getRange(1, 1, 1, HEADERS.ProcessedEmails.length).setValues([HEADERS.ProcessedEmails]).setFontWeight('bold');
+  }
+}
+
+function ensureCategories_(notes) {
+  var t = table_(SHEET.CATEGORIES);
+  var rows = rows_(SHEET.CATEGORIES);
+  if (!rows.length) {
+    DEFAULT_CATEGORIES.forEach(function (c) {
+      append_(SHEET.CATEGORIES, { Name: c.name, Icon: c.key, Color: c.color, Keywords: c.keywords, Active: true, FinancialGroup: c.group, Key: c.key, Budget: '' });
+    });
+    notes.push('Kategori bawaan dibuat.');
+    delete _DB.categories;
+    return;
+  }
+  var haveKeys = {};
+  rows.forEach(function (r) {
+    var key = String(r.Key || '').trim() || keyForCategoryName_(r.Name);
+    var patch = {};
+    if (key && !String(r.Key || '').trim()) patch.Key = key;
+    if (key && !String(r.FinancialGroup || '').trim()) {
+      var def = defaultCategory_(key);
+      if (def) patch.FinancialGroup = def.group;
+    }
+    if (Object.keys(patch).length) update_(SHEET.CATEGORIES, r._row, patch);
+    if (key) haveKeys[key] = true;
+  });
+  REQUIRED_CATEGORY_KEYS.forEach(function (k) {
+    if (haveKeys[k]) return;
+    var c = defaultCategory_(k);
+    append_(SHEET.CATEGORIES, { Name: c.name, Icon: c.key, Color: c.color, Keywords: c.keywords, Active: true, FinancialGroup: c.group, Key: c.key, Budget: '' });
+    notes.push('Kategori "' + c.name + '" ditambahkan.');
+  });
+  delete _DB.categories;
+}
+
+function ensureAccounts_(notes) {
+  var rows = rows_(SHEET.ACCOUNTS);
+  if (!rows.length) {
+    append_(SHEET.ACCOUNTS, { Name: 'Tunai', InitialBalance: 0, Color: '#4E6660', Icon: '', Active: true, Mode: 'manual' });
+    return;
+  }
+  rows.forEach(function (r) {
+    if (String(r.Mode || '').trim()) return;
+    var src = sourceForAccount_(r.Name);
+    update_(SHEET.ACCOUNTS, r._row, { Mode: src ? src.mode : 'smart' });
+  });
+  delete _DB.accounts;
+}
+
+function ensureDefaultSettings_() {
+  var existing = {};
+  rows_(SHEET.SETTINGS).forEach(function (r) { existing[String(r.Key).trim()] = true; });
+  Object.keys(DEFAULT_SETTINGS).forEach(function (k) {
+    if (!existing[k]) append_(SHEET.SETTINGS, { Key: k, Value: DEFAULT_SETTINGS[k] });
+  });
+  _DB.settings = null;
+}
+
+// ---------------- Pemicu otomatis ----------------
+
+function ensureTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (LEGACY_TRIGGER_HANDLERS.indexOf(t.getHandlerFunction()) > -1) ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('jejakSyncTrigger').timeBased().everyMinutes(SYNC_CONFIG.triggerMinutes).create();
+  ScriptApp.newTrigger('jejakWeeklyReview').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .atHour(Number(settings_().weeklyReviewHour) || 16).create();
+}
+
+function jejakSyncTrigger() {
+  syncTransactions({});
+}
+
+function jejakWeeklyReview() {
+  sendWeeklyReview_();
+}
