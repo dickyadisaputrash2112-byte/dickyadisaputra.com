@@ -9,7 +9,7 @@ function makeSheet(name) {
     getName: () => name,
     getLastRow: () => data.length,
     getLastColumn: () => data.reduce((m, r) => Math.max(m, r.length), 0),
-    setFrozenRows() {},
+    setFrozenRows() {}, setColumnWidth() {}, setHiddenGridlines() {},
     appendRow(row) { data.push(row.slice()); return sh; },
     deleteRow(r) { data.splice(r - 1, 1); },
     deleteRows(r, n) { data.splice(r - 1, n); },
@@ -28,7 +28,7 @@ function makeSheet(name) {
         },
         setValue(x) { return rng.setValues([[x]]); },
         clearContent() { for (let i = 0; i < nr; i++) { const row = data[r - 1 + i]; if (row) for (let j = 0; j < nc; j++) row[c - 1 + j] = ''; } return rng; },
-        setFontWeight() { return rng; }, setNumberFormat() { return rng; }
+        setFontWeight() { return rng; }, setFontSize() { return rng; }, setNumberFormat() { return rng; }
       };
       return rng;
     }

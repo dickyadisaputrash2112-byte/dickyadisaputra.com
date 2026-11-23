@@ -1,6 +1,6 @@
 // ============================================================
 // Migration.gs — Membersihkan data dari versi lama
-// Jalankan lewat menu Jejak → "Bersihkan data lama — pratinjau" dulu.
+// Jalankan lewat menu catat.id → "Bersihkan data lama — pratinjau" dulu.
 // ============================================================
 
 function cleanupLegacy(dryRun) {

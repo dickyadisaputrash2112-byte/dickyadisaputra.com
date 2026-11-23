@@ -1,6 +1,6 @@
 <script>
 /* ============================================================
-   Jejak — aplikasi web (satu halaman)
+   catat.id — aplikasi web (satu halaman)
    Semua data lewat google.script.run.api(aksi, data)
    ============================================================ */
 
@@ -299,7 +299,7 @@ function illus3() {
   var rows = [['Tanggal', 'Keterangan', 'Nominal', 1], ['14 Nov', 'Warteg Bahari', '−24.000'], ['14 Nov', 'Kopi Kenangan', '−27.500'], ['1 Nov', 'Gaji', '+7.500.000']];
   return '<span class="glow"></span><span class="ped1"></span><span class="ped2"></span>' +
     '<div style="position:absolute;left:50%;top:14px;width:236px;margin-left:-118px;border-radius:22px;overflow:hidden;background:#fff;color:var(--ink);transform:rotate(-5deg);box-shadow:0 26px 44px rgba(0,0,0,0.4)">' +
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--green);color:#fff">' + ic('sheet', 'ic-s') + '<b style="font-size:12px">Jejak — Data</b></div>' +
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--green);color:#fff">' + ic('sheet', 'ic-s') + '<b style="font-size:12px">catat.id — Data</b></div>' +
     rows.map(function (r) { return '<div style="display:grid;grid-template-columns:44px 1fr 64px;gap:6px;padding:7px 12px;border-top:1px solid #E5EAF5;font-size:10px;font-weight:' + (r[3] ? 800 : 600) + ';background:' + (r[3] ? '#F2F5FB' : '#fff') + '"><span>' + r[0] + '</span><span>' + r[1] + '</span><span style="text-align:right;color:' + (r[2].charAt(0) === '+' ? 'var(--green)' : 'inherit') + '">' + r[2] + '</span></div>'; }).join('') +
     '</div><span style="position:absolute;left:50%;top:160px;margin-left:52px;width:76px;height:76px;border-radius:99px;background:radial-gradient(circle at 40% 30%,#2E55B0,#0E1F4D);border:3px solid var(--ice);display:grid;place-items:center;color:var(--ice);box-shadow:0 18px 30px rgba(0,0,0,0.45)">' + ic('lock', 'ic-l') + '</span>';
 }
@@ -380,7 +380,7 @@ function sourcesView(scope) {
     '<p class="d-lede">Pilih semua bank dan e-wallet yang kamu pakai.</p>' +
     '<div class="chips" style="margin-bottom:14px"><span class="pill" style="background:rgba(199,224,255,0.16);color:#E3EEFF;height:30px;padding:0 12px">Otomatis = dikenali tepat</span><span class="pill" style="background:rgba(240,138,60,0.18);color:#FFD9BD;height:30px;padding:0 12px">Mode pintar = cek sekilas</span></div>' +
     '<div class="src-grid">' + tiles + '</div>' +
-    '<div class="d-card d-note" style="margin-top:16px"><span class="nic" style="background:var(--orange);color:var(--orange-ink)">' + ic('bell') + '</span><div><b>Nyalakan notifikasi email</b> transaksi di aplikasi bank yang kamu pilih, supaya Jejak bisa membacanya.</div></div>' + foot);
+    '<div class="d-card d-note" style="margin-top:16px"><span class="nic" style="background:var(--orange);color:var(--orange-ink)">' + ic('bell') + '</span><div><b>Nyalakan notifikasi email</b> transaksi di aplikasi bank yang kamu pilih, supaya catat.id bisa membacanya.</div></div>' + foot);
 }
 
 function pinView(scope) {
@@ -396,7 +396,7 @@ function pinView(scope) {
       return '<button class="key' + (k === 'del' ? ' ghost' : '') + '" data-act="pinKey" data-v="' + k + '" data-scope="' + scope + '" aria-label="' + (k === 'del' ? 'Hapus' : k) + '">' + (k === 'del' ? ic('back') : k) + '</button>';
     }).join('') + '</div>' +
     (S.busy ? '<div class="loading" style="color:#fff;padding:20px 0"><span class="spin"></span>Memeriksa…</div>' : '') +
-    (scope === 'lock' ? '<p class="center" style="margin:auto 0 0;font-size:12px;color:var(--dark-text-3)">Lupa PIN? Buka spreadsheet → menu Jejak → Reset PIN aplikasi.</p>' : ''));
+    (scope === 'lock' ? '<p class="center" style="margin:auto 0 0;font-size:12px;color:var(--dark-text-3)">Lupa PIN? Buka spreadsheet → menu catat.id → Reset PIN aplikasi.</p>' : ''));
 }
 
 function finishOnboarding() {
@@ -441,7 +441,7 @@ VIEWS.sync = function () {
     '<h1 class="d-title center" style="font-size:30px">' + (done ? (st.status === 'error' ? 'Sinkron belum berhasil' : 'Semua beres!') : 'Membaca<br><span>email transaksimu…</span>') + '</h1>' +
     '<p class="d-lede center">' + (done ? (st.status === 'error' ? esc(r.message) : '<b style="color:#fff">' + (r.saved || 0) + ' transaksi</b> tercatat dari ' + (r.messages || 0) + ' email.') : 'Biasanya kurang dari semenit. Jangan tutup halaman ini.') + '</p>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' + list + '</div>' +
-    (done && r.review ? '<div class="d-card d-note" style="margin-top:14px"><span class="nic" style="background:var(--orange);color:var(--orange-ink)">' + ic('spark') + '</span><div><b>' + r.review + ' transaksi perlu kamu cek sekilas.</b> Cukup sekali; selanjutnya Jejak akan ingat.</div></div>' : '') +
+    (done && r.review ? '<div class="d-card d-note" style="margin-top:14px"><span class="nic" style="background:var(--orange);color:var(--orange-ink)">' + ic('spark') + '</span><div><b>' + r.review + ' transaksi perlu kamu cek sekilas.</b> Cukup sekali; selanjutnya catat.id akan ingat.</div></div>' : '') +
     (done ? '<button class="btn btn-cta mt-auto" data-act="home" style="margin-top:20px">Lihat catatanku' + ic('right') + '</button>' : ''));
 };
 
@@ -511,7 +511,7 @@ VIEWS.home = function () {
 
   var banner = d.reviewCount ? '<button class="navy-card" data-act="review" style="display:flex;align-items:center;gap:14px;padding:10px 10px 10px 12px;border-radius:99px;text-align:left">' +
     '<span style="width:44px;height:44px;border-radius:99px;background:var(--orange);color:#fff;display:grid;place-items:center;flex-shrink:0">' + ic('spark') + '</span>' +
-    '<span style="flex:1"><b style="display:block;font-size:15px">' + d.reviewCount + ' transaksi perlu dicek</b><span style="font-size:12px;color:var(--dark-text-3)">±10 detik, Jejak akan ingat</span></span>' +
+    '<span style="flex:1"><b style="display:block;font-size:15px">' + d.reviewCount + ' transaksi perlu dicek</b><span style="font-size:12px;color:var(--dark-text-3)">±10 detik, catat.id akan ingat</span></span>' +
     '<span style="width:44px;height:44px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('right') + '</span></button>' : '';
 
   var cats = d.cats.filter(function (c) { return c.key !== 'transfer'; }).slice(0, 8).map(function (c) {
@@ -744,7 +744,7 @@ VIEWS.add = function () {
     '<button class="btn btn-dark" id="add-save" data-act="addSave"' + (ready && !S.busy ? '' : ' disabled') + '>' + (S.busy ? 'Menyimpan…' : 'Simpan') + '</button>');
 };
 function parsedChips(p) {
-  if (!p) return '<span class="small muted" style="grid-column:1/-1">Jejak akan mengenali nominal, kategori, dan cara bayar.</span>';
+  if (!p) return '<span class="small muted" style="grid-column:1/-1">catat.id akan mengenali nominal, kategori, dan cara bayar.</span>';
   var cell = function (label, value, icon, ok) {
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:99px;background:rgba(255,255,255,0.7)' + (ok ? '' : ';opacity:.6') + '"><span style="width:32px;height:32px;border-radius:99px;background:var(--navy);color:var(--ice);display:grid;place-items:center;flex-shrink:0">' + ic(icon, 'ic-s') + '</span><span style="min-width:0"><span style="display:block;font-size:10px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">' + label + '</span><b style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(value) + '</b></span></div>';
   };
@@ -836,7 +836,7 @@ VIEWS.me = function () {
     rowToggle('set-pin', 'lock', 'Kunci dengan PIN', b.hasPin ? 'Aktif' : 'Belum diatur', b.hasPin, 'setPin') +
     rowLink('openSheet', 'sheet', 'Buka data di Google Sheets', 'Data tersimpan di Drive milikmu', 'var(--green)') +
     rowLink('syncNowMe', 'sync', 'Sinkronkan sekarang', 'Terakhir ' + ago(b.lastSync)) + '</section>' +
-    '<p class="center small muted">Jejak v' + esc(b.app.version) + '</p>', { nav: 'me' });
+    '<p class="center small muted">catat.id v' + esc(b.app.version) + '</p>', { nav: 'me' });
 };
 
 VIEWS.akun = function () {
@@ -1210,7 +1210,7 @@ function start() {
     else S.route = 'home';
     render();
   }).catch(function (e) {
-    document.getElementById('app').innerHTML = darkFrame('<h1 class="d-title">Ada yang<br><span>belum siap.</span></h1><p class="d-lede">' + esc(e.message) + '</p><p class="d-lede">Buka spreadsheet, lalu jalankan menu Jejak → Setup.</p>');
+    document.getElementById('app').innerHTML = darkFrame('<h1 class="d-title">Ada yang<br><span>belum siap.</span></h1><p class="d-lede">' + esc(e.message) + '</p><p class="d-lede">Buka spreadsheet, lalu jalankan menu catat.id → Setup.</p>');
   });
 }
 start();

@@ -1,8 +1,8 @@
 // ============================================================
-// Config.gs — Konstanta, skema sheet, dan data bawaan Jejak
+// Config.gs — Konstanta, skema sheet, dan data bawaan catat.id
 // ============================================================
 
-var APP = { name: 'Jejak', version: '2.0.0' };
+var APP = { name: 'catat.id', version: '2.0.0' };
 
 var SHEET = {
   TX: 'Transactions',

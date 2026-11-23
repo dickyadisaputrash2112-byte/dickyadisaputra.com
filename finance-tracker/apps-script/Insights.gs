@@ -354,8 +354,8 @@ function sendWeeklyReview_() {
     home.budget > 0 ? 'Sisa batas bulan ini ' + rupiah_(home.left) + ', jatah aman ' + rupiah_(home.perDay) + ' per hari.' : '',
     home.reviewCount ? home.reviewCount + ' transaksi masih menunggu dicek di aplikasi.' : '',
     '',
-    '— Jejak'
+    '— catat.id'
   ].filter(function (l, i, arr) { return l !== '' || (arr[i - 1] !== ''); });
-  MailApp.sendEmail({ to: to, subject: 'Review mingguan Jejak — ' + rupiah_(wk.total), body: lines.join('\n') });
+  MailApp.sendEmail({ to: to, subject: 'Review mingguan catat.id — ' + rupiah_(wk.total), body: lines.join('\n') });
   return { sent: true };
 }

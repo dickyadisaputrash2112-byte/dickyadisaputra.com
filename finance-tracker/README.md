@@ -1,7 +1,11 @@
-# Jejak — catat uangmu tanpa mencatat
+# catat.id — catat uangmu tanpa mencatat
 
 Aplikasi web Google Apps Script yang membaca email notifikasi bank & e-wallet di Gmail,
 lalu mencatatnya otomatis ke Google Sheets milik pengguna.
+
+Panduan untuk dijual ke orang lain (template, link salin, Lynk.id/Scalev) ada di dokumen
+"Panduan Penjual catat.id". Panduan pembeli ada di "Panduan catat.id: Pasang & Pakai".
+Bagian di bawah ini untuk memasang ke spreadsheet kamu sendiri yang sudah berisi data lama.
 
 ## Isi folder
 
@@ -36,8 +40,8 @@ Sheet (tab) di spreadsheet **jangan** dihapus. Data lama tetap dipakai.
 **4. Ganti manifest.** Setelan proyek (ikon gerigi) → centang "Tampilkan file manifes appsscript.json".
 Buka `appsscript.json`, ganti isinya dengan file `apps-script/appsscript.json`.
 
-**5. Jalankan Setup.** Simpan, lalu muat ulang spreadsheet. Akan muncul menu **Jejak**.
-Klik Jejak → 1. Setup / perbarui. Izinkan akses (Sheets, Gmail baca, kirim email review).
+**5. Jalankan Setup.** Simpan, lalu muat ulang spreadsheet. Akan muncul menu **catat.id**.
+Klik catat.id → 1. Setup. Izinkan akses (Sheets, Gmail baca, kirim email review).
 Setup membuat sheet yang belum ada, menambah kolom baru di kanan, dan memasang pemicu sinkron tiap 15 menit.
 
 **6. Terbitkan aplikasi web.** Di editor: Terapkan → Penerapan baru → Jenis: Aplikasi web.
@@ -47,8 +51,8 @@ Buka URL itu di HP, lalu "Tambahkan ke Layar Utama" supaya terasa seperti aplika
 **7. Onboarding.** Di aplikasi isi nama panggilan, **nama persis seperti di rekening** (penting untuk
 mengenali transfer ke rekening sendiri), pilih bank/e-wallet, pemasukan bulanan, dan PIN.
 
-**8. Bersihkan data lama.** Kembali ke spreadsheet: Jejak → Bersihkan data lama — pratinjau.
-Kalau angkanya masuk akal, jalankan Jejak → Bersihkan data lama — jalankan. Ini:
+**8. Bersihkan data lama.** Kembali ke spreadsheet: catat.id → Bersihkan data lama — pratinjau.
+Kalau angkanya masuk akal, jalankan catat.id → Bersihkan data lama — jalankan. Ini:
 menghapus rekap bulanan GoPay yang tercatat dobel, menghapus baris bertanggal rusak, mengubah
 uang masuk yang salah tercatat sebagai pengeluaran, mengubah transfer ke rekening sendiri menjadi
 Transfer, dan menyeragamkan kategori Admin Fee.
@@ -67,7 +71,7 @@ URL aplikasi tetap sama.
 - Transfer ke rekening yang terhubung ke goal otomatis menjadi setoran goal.
 - Alokasi bulanan 50/20/30 (bisa diubah) dari pemasukan nyata atau perkiraan pemasukan.
 
-Lupa PIN: spreadsheet → Jejak → Reset PIN aplikasi.
+Lupa PIN: spreadsheet → catat.id → Reset PIN aplikasi.
 
 ## Menjalankan tes
 
