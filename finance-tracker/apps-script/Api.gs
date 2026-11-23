@@ -174,8 +174,8 @@ var API = {
   deleteGoal: function (p) { requireGoals_(); return deleteGoal(p.id); },
   addDeposit: function (p) { requireGoals_(); return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
 
-  allocation: function (p) { return allocationData(p); },
-  saveAllocation: function (p) { return saveAllocation(p); },
+  allocation: function (p) { requireAlloc_(); return allocationData(p); },
+  saveAllocation: function (p) { requireAlloc_(); return saveAllocation(p); },
 
   saveProfile: function (p) {
     if (p.nickname !== undefined) setSetting_('nickname', String(p.nickname).trim());

@@ -17,7 +17,7 @@ const M = [
 const g = create({ threads: [M] });
 const call = (a, p) => { const r = g.api(a, p); if (!r.ok) throw new Error(a + ': ' + r.error); return r.data; };
 g.onOpen(); console.log('start sheet', g._sheets['Mulai di sini']._data.length); g.setupApp();
-call('activate', { code: mkCode('PRM', 'TEST') });
+call('activate', { code: mkCode('DMD', 'TEST') });
 let b = call('bootstrap');
 console.log('boot', b.onboarded, b.accounts.length, b.categories.length, b.catalog.length);
 call('saveOnboarding', { nickname: 'Dicky', ownerNames: ['DICKY ADISAPUTRA'], sources: ['Mandiri','Jago','BCA','GoPay','Superbank','BSI','Tunai'], expectedIncome: 8000000, alloc: { need: 50, want: 20, save: 30 }, trackIncome: true, weeklyReviewEnabled: true });

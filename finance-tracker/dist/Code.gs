@@ -138,32 +138,45 @@ var LEGACY_TRIGGER_HANDLERS = [
 
 
 // ============================================================
-// Plans.gs — Versi produk (Standard, Pro, Premium) dan kode aktivasi
+// Plans.gs — Versi produk (Gold, Platinum, Diamond) dan kode aktivasi
 //
-// Standard : riwayat email 90 hari ke belakang, tanpa Goals
-// Pro      : riwayat email 1 tahun ke belakang, tanpa Goals
-// Premium  : riwayat email 5 tahun ke belakang, Goals & tabungan
+// Gold     : riwayat email 90 hari ke belakang
+// Platinum : riwayat email 1 tahun ke belakang
+// Diamond  : riwayat email 5 tahun ke belakang + Goals & tabungan + Alokasi bulanan
+//
 // Versi bawaan sebuah template diatur penjual lewat menu catat.id → Masukkan kode versi / upgrade
 // (kodenya disimpan di tab tersembunyi "_lisensi" dan ikut tersalin ke pembeli).
-// Tanpa kode, aplikasi berjalan sebagai Standard.
+// Tanpa kode, aplikasi berjalan sebagai Gold.
+//
+// Jenis kode:
+//   PLT-xxxx-xxxx  → Platinum (dari Gold)            · upgrade Rp50rb
+//   DMD-xxxx-xxxx  → Diamond  (dari Gold/Platinum)   · upgrade Rp100rb dari Gold
+//   DUP-xxxx-xxxx  → Diamond  (hanya dari Platinum)  · upgrade Rp50rb dari Platinum
 // ============================================================
 
 // >>> DIISI PENJUAL: link halaman beli upgrade di Lynk.id / Scalev (kosongkan kalau belum ada)
 var UPGRADE_LINKS = {
-  pro: '',      // mis. 'https://lynk.id/namatoko/upgrade-pro'
-  premium: ''   // mis. 'https://lynk.id/namatoko/upgrade-premium'
+  goldToPlatinum: '',     // mis. 'https://lynk.id/namatoko/upgrade-platinum'
+  goldToDiamond: '',      // mis. 'https://lynk.id/namatoko/upgrade-diamond'
+  platinumToDiamond: ''   // mis. 'https://lynk.id/namatoko/platinum-ke-diamond'
 };
-var UPGRADE_PRICE = 'Rp50rb';
+var UPGRADE_PRICES = { goldToPlatinum: 'Rp50rb', goldToDiamond: 'Rp100rb', platinumToDiamond: 'Rp50rb' };
+
+// >>> DIISI PENJUAL: kode yang bocor dan tidak boleh dipakai lagi di salinan baru, mis. ['PLT-AAAA-BBBB']
+var REVOKED_CODES = [];
 
 var PLANS = {
-  standard: { key: 'standard', name: 'Standard', rank: 1, historyDays: 90, goals: false },
-  pro: { key: 'pro', name: 'Pro', rank: 2, historyDays: 365, goals: false },
-  premium: { key: 'premium', name: 'Premium', rank: 3, historyDays: 1825, goals: true }
+  gold: { key: 'gold', name: 'Gold', rank: 1, historyDays: 90, goals: false, alloc: false },
+  platinum: { key: 'platinum', name: 'Platinum', rank: 2, historyDays: 365, goals: false, alloc: false },
+  diamond: { key: 'diamond', name: 'Diamond', rank: 3, historyDays: 1825, goals: true, alloc: true }
 };
-var PLAN_PREFIX = { STD: 'standard', PRO: 'pro', PRM: 'premium' };
+var CODE_TYPES = {
+  PLT: { plan: 'platinum', from: ['gold'] },
+  DMD: { plan: 'diamond', from: ['gold', 'platinum'] },
+  DUP: { plan: 'diamond', from: ['platinum'] }
+};
 var LICENSE_SALT = 'lk_ebca9e5136b56b261215e187';
 var CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
 var LICENSE_SHEET = '_lisensi';
 
 function plan_() {
@@ -177,7 +190,7 @@ function plan_() {
     p.setProperty('CATAT_PLAN_CODE', r.code);
     return PLANS[r.plan];
   }
-  return PLANS.standard;
+  return PLANS.gold;
 }
 
 function templateCode_() {
@@ -204,8 +217,7 @@ function installedAt_() {
 // Batas paling lama riwayat email yang dibaca, dihitung dari tanggal pemasangan.
 function historyTarget_() {
   var d = installedAt_();
-  var t = new Date(d.getFullYear(), d.getMonth(), d.getDate() - plan_().historyDays);
-  return t;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - plan_().historyDays);
 }
 
 function codeChecksum_(prefix, body) {
@@ -217,16 +229,21 @@ function codeChecksum_(prefix, body) {
 
 function parseCode_(code) {
   var c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  var m = c.match(/^(STD|PRO|PRM)([A-Z2-9]{4})([A-Z2-9]{4})$/);
+  var m = c.match(/^(PLT|DMD|DUP)([A-Z2-9]{4})([A-Z2-9]{4})$/);
   if (!m || codeChecksum_(m[1], m[2]) !== m[3]) return null;
-  return { plan: PLAN_PREFIX[m[1]], code: m[1] + '-' + m[2] + '-' + m[3] };
+  var full = m[1] + '-' + m[2] + '-' + m[3];
+  if (REVOKED_CODES.indexOf(full) > -1) return null;
+  return { type: m[1], plan: CODE_TYPES[m[1]].plan, from: CODE_TYPES[m[1]].from, code: full };
 }
 
 function activatePlan_(code) {
   var r = parseCode_(code);
-  if (!r) throw new Error('Kode aktivasi tidak dikenali. Periksa lagi huruf dan angkanya.');
+  if (!r) throw new Error('Kode tidak dikenali atau sudah tidak berlaku. Periksa lagi huruf dan angkanya.');
   var cur = plan_(), next = PLANS[r.plan];
-  if (next.rank < cur.rank) throw new Error('Versi kamu sekarang sudah ' + cur.name + '.');
+  if (next.rank <= cur.rank) throw new Error('Versi kamu sekarang sudah ' + cur.name + '.');
+  if (r.from.indexOf(cur.key) === -1) {
+    throw new Error('Kode ini untuk upgrade dari ' + r.from.map(function (k) { return PLANS[k].name; }).join('/') + '. Versi kamu sekarang ' + cur.name + '.');
+  }
   var p = PropertiesService.getScriptProperties();
   p.setProperty('CATAT_PLAN', next.key);
   p.setProperty('CATAT_PLAN_CODE', r.code);
@@ -236,19 +253,34 @@ function activatePlan_(code) {
   return planInfo_();
 }
 
+function upgradeOptions_(key) {
+  var o = [];
+  if (key === 'gold') {
+    o.push({ to: 'platinum', name: 'Platinum', price: UPGRADE_PRICES.goldToPlatinum, link: UPGRADE_LINKS.goldToPlatinum || '' });
+    o.push({ to: 'diamond', name: 'Diamond', price: UPGRADE_PRICES.goldToDiamond, link: UPGRADE_LINKS.goldToDiamond || '' });
+  } else if (key === 'platinum') {
+    o.push({ to: 'diamond', name: 'Diamond', price: UPGRADE_PRICES.platinumToDiamond, link: UPGRADE_LINKS.platinumToDiamond || '' });
+  }
+  return o;
+}
+
 function planInfo_() {
   var pl = plan_();
   var p = PropertiesService.getScriptProperties();
   return {
-    key: pl.key, name: pl.name, historyDays: pl.historyDays, goals: pl.goals,
+    key: pl.key, name: pl.name, historyDays: pl.historyDays, goals: pl.goals, alloc: pl.alloc,
     historyFrom: historyTarget_().toISOString(),
     code: p.getProperty('CATAT_PLAN_CODE') || '',
-    upgrade: { pro: UPGRADE_LINKS.pro || '', premium: UPGRADE_LINKS.premium || '', price: UPGRADE_PRICE }
+    upgrades: upgradeOptions_(pl.key)
   };
 }
 
 function requireGoals_() {
-  if (!plan_().goals) throw new Error('Goals & tabungan tersedia di versi Premium.');
+  if (!plan_().goals) throw new Error('Goals & tabungan tersedia di versi Diamond.');
+}
+
+function requireAlloc_() {
+  if (!plan_().alloc) throw new Error('Alokasi bulanan tersedia di versi Diamond.');
 }
 
 
@@ -1497,10 +1529,12 @@ function homeData(p) {
   var prevSame = sum_(all.filter(function (t) { return isOut_(t) && inRange_(t, pStart, pCut); }));
 
   var bb = budgetBase_(income);
+  // Batas & jatah per kategori berasal dari Alokasi bulanan (khusus Diamond).
+  if (!plan_().alloc) bb = { budget: 0, base: bb.base };
   var daysLeft = isCur ? b.daysIn - day + 1 : 0;
   var left = bb.budget - spent;
 
-  var cb = categoryBudgets_(all, bb.base).byCategory;
+  var cb = plan_().alloc ? categoryBudgets_(all, bb.base).byCategory : {};
   var byCat = {};
   month.filter(isOut_).forEach(function (t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
   var cats = Object.keys(byCat).map(function (name) {
@@ -2218,8 +2252,8 @@ var API = {
   deleteGoal: function (p) { requireGoals_(); return deleteGoal(p.id); },
   addDeposit: function (p) { requireGoals_(); return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
 
-  allocation: function (p) { return allocationData(p); },
-  saveAllocation: function (p) { return saveAllocation(p); },
+  allocation: function (p) { requireAlloc_(); return allocationData(p); },
+  saveAllocation: function (p) { requireAlloc_(); return saveAllocation(p); },
 
   saveProfile: function (p) {
     if (p.nickname !== undefined) setSetting_('nickname', String(p.nickname).trim());
@@ -2341,10 +2375,10 @@ function ensureStartSheet_(ss) {
   sh.setHiddenGridlines(true);
 }
 
-// Penjual memakai ini di template master Pro/Premium; pembeli juga bisa memakainya untuk upgrade.
+// Penjual memakai ini di template master Platinum/Diamond; pembeli juga bisa memakainya untuk upgrade.
 function menuPlanCode() {
   var ui = SpreadsheetApp.getUi();
-  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PRO-XXXX-XXXX atau PRM-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
+  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PLT-XXXX-XXXX atau DMD-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
   if (r.getSelectedButton() !== ui.Button.OK) return;
   try {
     var info = activatePlan_(r.getResponseText());

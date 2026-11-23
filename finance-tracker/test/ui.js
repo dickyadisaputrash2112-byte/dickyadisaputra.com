@@ -48,18 +48,19 @@ const { chromium } = require('playwright');
   await click('[data-act=wkTest]'); await p.waitForTimeout(600);
   const m1 = await p.evaluate(() => fetch('/__mail').then(r => r.json())); console.log('weekly mail', m1.subject, 'cc', m1.cc);
   await click('[data-act=wkSave]'); await p.waitForTimeout(700); await shot('19c-me-after-weekly');
-  await click('.glass[data-r=alloc]'); await p.waitForTimeout(800); await shot('20-alloc');
-  await click('[data-act=aeOpen]'); await shot('21-alloc-edit'); await click('[data-act=aeSave]'); await p.waitForTimeout(700);
-  // tombol Rencana di menu: Goals & Alokasi
-  // versi Standard: Goals terkunci → upgrade pakai kode Premium
-  await click('.seg [data-r=goals]'); await p.waitForTimeout(700); await shot('21b-goals-locked');
+  // versi Gold: Rencana terkunci → upgrade pakai kode Diamond
+  await click('.glass[data-r=alloc]'); await p.waitForTimeout(800); await shot('20a-alloc-locked');
   await click('[data-act=openLicense]'); await p.waitForTimeout(400); await shot('21c-license');
-  await p.fill('#lic-code', 'PRO-AAAA-BBBB'); await p.dispatchEvent('#lic-code', 'input'); await click('[data-act=licActivate]'); await p.waitForTimeout(600);
+  await p.fill('#lic-code', 'PLT-AAAA-BBBB'); await p.dispatchEvent('#lic-code', 'input'); await click('[data-act=licActivate]'); await p.waitForTimeout(600);
   console.log('bad code msg:', await p.locator('.err').first().textContent());
-  const licCode = (await p.evaluate(() => fetch('/__code').then(r => r.json()))).code;
-  await p.fill('#lic-code', licCode.toLowerCase()); await p.dispatchEvent('#lic-code', 'input'); await click('[data-act=licActivate]'); await p.waitForTimeout(900); await shot('21d-license-premium');
+  const codes = await p.evaluate(() => fetch('/__code').then(r => r.json()));
+  await p.fill('#lic-code', codes.dup); await p.dispatchEvent('#lic-code', 'input'); await click('[data-act=licActivate]'); await p.waitForTimeout(600);
+  console.log('DUP on gold msg:', await p.locator('.err').first().textContent());
+  await p.fill('#lic-code', codes.code.toLowerCase()); await p.dispatchEvent('#lic-code', 'input'); await click('[data-act=licActivate]'); await p.waitForTimeout(900); await shot('21d-license-diamond');
   console.log('plan now:', await p.evaluate(() => S.boot.plan.name));
-  await click('[data-act=back]'); await p.waitForTimeout(700); await shot('22-goals-empty');
+  await click('[data-act=back]'); await p.waitForTimeout(800); await shot('20-alloc');
+  await click('[data-act=aeOpen]'); await shot('21-alloc-edit'); await click('[data-act=aeSave]'); await p.waitForTimeout(700);
+  await click('.seg [data-r=goals]'); await p.waitForTimeout(700); await shot('22-goals-empty');
   await click('[data-act=goalNew]'); await p.fill('#gf-name', 'Dana darurat'); await p.fill('#gf-target', '20000000'); await p.fill('#gf-current', '3000000'); await p.fill('#gf-deadline', '2027-12');
   await click('[data-act=gfAcct][data-v=BCA]'); await shot('23-goal-edit'); await click('[data-act=gfSave]'); await p.waitForTimeout(800); await shot('24-goals');
   await click('[data-act=goal]'); await p.waitForTimeout(700); await click('[data-act=depOpen]'); await p.fill('#dep-amt', '500000'); await click('[data-act=depSave]'); await p.waitForTimeout(800); await shot('25-goal');

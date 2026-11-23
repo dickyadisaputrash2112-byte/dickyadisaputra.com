@@ -377,7 +377,6 @@ VIEWS.ob = function () {
       '<div style="display:flex;flex-direction:column;gap:18px;flex:1">' +
       '<div><label class="d-label" for="ob-nick">Nama panggilan</label><input class="d-input" id="ob-nick" data-input="obNick" value="' + esc(o.nickname) + '" placeholder="mis. Andi" autocomplete="given-name"></div>' +
       '<div><label class="d-label" for="ob-owner">Nama di rekening</label>' + ownerTags(o.owners, 'ob') + '</div>' +
-      '<div><label class="d-label" for="ob-code">Kode aktivasi Pro/Premium (opsional)</label><input class="d-input" id="ob-code" data-input="obCode" value="' + esc(o.code || '') + '" placeholder="Lewati kalau membeli Standard" style="font-size:16px;letter-spacing:.04em" autocapitalize="characters"></div>' +
       '<div class="d-card d-note"><span class="nic">' + ic('swap') + '</span><div><b>Transfer ke rekening sendiri</b> tidak akan dihitung sebagai pengeluaran. Tulis nama persis seperti di rekening, tekan Enter untuk menambah.</div></div>' +
       '</div><button class="btn btn-cta" data-act="obNext" style="margin-top:20px">Lanjut' + ic('right') + '</button>');
   }
@@ -575,8 +574,8 @@ VIEWS.home = function () {
 
   var flow = S.boot.settings.trackIncome ? '<section class="grid2"><div class="glass pad-s" style="border-radius:26px;padding:14px"><span class="ticon" style="width:40px;height:40px;border-radius:99px;background:#fff;color:var(--green);display:grid;place-items:center">' + ic('arrIn') + '</span>' +
     '<div class="small" style="margin-top:12px;font-weight:600;color:var(--ink-2)">Pemasukan</div><div style="font-size:19px;font-weight:800;letter-spacing:-.03em">+' + rp(d.income) + '</div><div class="small muted" style="font-weight:600">' + d.incomeCount + ' transaksi masuk</div></div>' +
-    '<button class="navy-card" data-act="go" data-r="' + (isPremium() ? 'goals' : 'alloc') + '" style="padding:14px;border-radius:26px;text-align:left"><span style="width:40px;height:40px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('wallet') + '</span>' +
-    '<div class="small" style="margin-top:12px;font-weight:600;color:var(--dark-text-3)">Sisa uang</div><div style="font-size:19px;font-weight:800;letter-spacing:-.03em">' + rp(d.leftover) + '</div><div class="small" style="font-weight:600;color:var(--dark-text-3)">' + (isPremium() ? 'Ditabung ' + short(d.savingThisMonth) : 'Lihat alokasi bulanan') + '</div></button></section>' : '';
+    '<button class="navy-card" data-act="go" data-r="goals" style="padding:14px;border-radius:26px;text-align:left"><span style="width:40px;height:40px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('wallet') + '</span>' +
+    '<div class="small" style="margin-top:12px;font-weight:600;color:var(--dark-text-3)">Sisa uang</div><div style="font-size:19px;font-weight:800;letter-spacing:-.03em">' + rp(d.leftover) + '</div><div class="small" style="font-weight:600;color:var(--dark-text-3)">' + (isPremium() ? 'Ditabung ' + short(d.savingThisMonth) : 'Bulan ini') + '</div></button></section>' : '';
 
   var banner = d.reviewCount ? '<button class="navy-card" data-act="review" style="display:flex;align-items:center;gap:14px;padding:10px 10px 10px 12px;border-radius:99px;text-align:left">' +
     '<span style="width:44px;height:44px;border-radius:99px;background:var(--orange);color:#fff;display:grid;place-items:center;flex-shrink:0">' + ic('spark') + '</span>' +
@@ -932,16 +931,17 @@ VIEWS.insight = function () {
     (merchants ? '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Merchant teratas</h2></div>' + merchants + '</section>' : '') + '</div></div>', { nav: 'insight' });
 };
 
-/* ---------------- Versi (Standard / Pro / Premium) ---------------- */
-function plan() { return (S.boot && S.boot.plan) || { key: 'standard', name: 'Standard', historyDays: 90, goals: false }; }
+/* ---------------- Versi (Gold / Platinum / Diamond) ---------------- */
+function plan() { return (S.boot && S.boot.plan) || { key: 'gold', name: 'Gold', historyDays: 90, goals: false, alloc: false, upgrades: [] }; }
 function isPremium() { return !!plan().goals; }
+function hasAlloc() { return !!plan().alloc; }
 function planPill(name) { return '<span class="pill" style="height:22px;padding:0 9px;font-size:10px;background:var(--orange);color:var(--orange-ink)">' + ic('lock', 'ic-s') + esc(name) + '</span>'; }
 var PLAN_ROWS = [
   ['Catat otomatis dari email bank & e-wallet', true, true, true],
   ['Riwayat email saat pasang', '90 hari', '1 tahun', '5 tahun'],
   ['Insight, filter, catat cepat', true, true, true],
-  ['Alokasi bulanan', true, true, true],
   ['Rekap tahunan', 'Sebagian', 'Lengkap', 'Lengkap'],
+  ['Alokasi bulanan', false, false, true],
   ['Goals & tabungan otomatis', false, false, true]
 ];
 function fmtDate(iso) { var d = new Date(iso); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
@@ -987,9 +987,9 @@ VIEWS.year = function () {
   if (!d) return frame(hdr + loading('Menghitung setahun…'), { wide: true });
   if (d.__error) return frame(hdr + errBox(d), { wide: true });
   var hist = d.history && d.history.target && new Date(d.history.target).getFullYear() <= y ? historyCard(d.history) : '';
-  if (!hist && d.history && d.history.target && new Date(d.history.target) > new Date(y, 0, 1) && plan().key !== 'premium') {
+  if (!hist && d.history && d.history.target && new Date(d.history.target) > new Date(y, 0, 1) && plan().key !== 'diamond') {
     hist = '<section class="glass pad-s" style="display:flex;gap:12px;align-items:center;border-radius:26px;border-style:dashed"><span style="width:40px;height:40px;border-radius:99px;background:var(--orange);color:var(--orange-ink);display:grid;place-items:center;flex-shrink:0">' + ic('lock', 'ic-s') + '</span>' +
-      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.5;color:var(--ink-2)"><b style="color:var(--ink)">Versi ' + esc(plan().name) + ' membaca riwayat sejak ' + fmtDate(d.history.target) + '.</b> Upgrade ke ' + (plan().key === 'standard' ? 'Pro' : 'Premium') + ' supaya rekap ' + y + ' lengkap dari Januari.</div>' +
+      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.5;color:var(--ink-2)"><b style="color:var(--ink)">Versi ' + esc(plan().name) + ' membaca riwayat sejak ' + fmtDate(d.history.target) + '.</b> Upgrade ke ' + (plan().key === 'gold' ? 'Platinum atau Diamond' : 'Diamond') + ' supaya rekap ' + y + ' lengkap dari Januari.</div>' +
       '<button class="btn btn-dark" data-act="openLicense" style="width:auto;height:44px;padding:0 16px;font-size:13px">Upgrade</button></section>';
   }
   if (!d.count) return frame(hdr + hist + '<div class="glass empty"><b>Belum ada catatan di ' + y + '</b>Rekap muncul setelah transaksi tercatat.</div>', { wide: true });
@@ -1079,8 +1079,8 @@ VIEWS.me = function () {
     }).join('') + '</div></section>';
   return frame(header('Profil', 'none', '<button class="cbtn" data-act="go" data-r="akun" aria-label="Ubah profil">' + ic('edit') + '</button>') + '<div class="cols"><div class="col">' +
     '<button class="glass pad" data-act="go" data-r="akun" style="display:flex;align-items:center;gap:14px;text-align:left"><span class="avatar" style="width:60px;height:60px;font-size:22px">' + esc(nick().charAt(0).toUpperCase()) + '</span><span style="flex:1;min-width:0"><b style="display:block;font-size:20px;letter-spacing:-.03em">' + esc(nick()) + '</b><span class="small muted" style="font-weight:600">' + esc(b.email) + '</span></span>' + ic('chev') + '</button>' +
-    '<div class="grid2"><button class="navy-card" data-act="go" data-r="goals" style="padding:14px;border-radius:28px;text-align:left;display:flex;flex-direction:column;gap:18px"><span style="width:42px;height:42px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('target') + '</span><span><b style="display:block;font-size:15px">Goals &amp; tabungan</b>' + (isPremium() ? '<span class="small" style="color:var(--dark-text-3)">Target &amp; setoran</span>' : planPill('Premium')) + '</span></button>' +
-    '<button class="glass" data-act="go" data-r="alloc" style="padding:14px;border-radius:28px;text-align:left;display:flex;flex-direction:column;gap:18px"><span style="width:42px;height:42px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('pie') + '</span><span><b style="display:block;font-size:15px">Alokasi bulanan</b><span class="small muted">' + b.settings.allocNeed + ' / ' + b.settings.allocWant + ' / ' + b.settings.allocSave + '</span></span></button></div>' +
+    '<div class="grid2"><button class="navy-card" data-act="go" data-r="goals" style="padding:14px;border-radius:28px;text-align:left;display:flex;flex-direction:column;gap:18px"><span style="width:42px;height:42px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('target') + '</span><span><b style="display:block;font-size:15px">Goals &amp; tabungan</b>' + (isPremium() ? '<span class="small" style="color:var(--dark-text-3)">Target &amp; setoran</span>' : planPill('Diamond')) + '</span></button>' +
+    '<button class="glass" data-act="go" data-r="alloc" style="padding:14px;border-radius:28px;text-align:left;display:flex;flex-direction:column;gap:18px"><span style="width:42px;height:42px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('pie') + '</span><span><b style="display:block;font-size:15px">Alokasi bulanan</b>' + (hasAlloc() ? '<span class="small muted">' + b.settings.allocNeed + ' / ' + b.settings.allocWant + ' / ' + b.settings.allocSave + '</span>' : planPill('Diamond')) + '</span></button></div>' +
     '<div class="sec-head"><h2>Sumber terhubung</h2><button class="link" data-act="srcEdit">Ubah</button></div>' +
     '<section class="glass" style="padding:6px;border-radius:30px;display:flex;flex-direction:column;gap:6px">' + srcHtml + '</section>' +
     '</div><div class="col"><div class="sec-head"><h2>Pengaturan</h2></div>' + themeHtml +
@@ -1088,7 +1088,7 @@ VIEWS.me = function () {
     rowToggle('set-ti', 'arrIn', 'Catat pemasukan', 'Gaji &amp; transfer masuk otomatis', b.settings.trackIncome, 'setTrack') +
     rowLink('openWeekly', 'mail', 'Review mingguan', b.settings.weeklyReviewEnabled ? 'Tiap ' + DAYS[b.settings.weeklyReviewDay] + ', ' + ('0' + b.settings.weeklyReviewHour).slice(-2) + '.00' + (b.settings.weeklyReviewCc ? ' · +' + b.settings.weeklyReviewCc.split(',').length + ' email' : '') : 'Mati') +
     rowToggle('set-pin', 'lock', 'Kunci dengan PIN', b.hasPin ? 'Aktif' : 'Belum diatur', b.hasPin, 'setPin') +
-    rowLink('openLicense', 'shield', 'Versi catat.id: ' + plan().name, plan().key === 'premium' ? 'Semua fitur aktif' : 'Lihat perbandingan & masukkan kode upgrade') +
+    rowLink('openLicense', 'shield', 'Versi catat.id: ' + plan().name, plan().key === 'diamond' ? 'Semua fitur aktif' : 'Lihat perbandingan & masukkan kode upgrade') +
     rowLink('openYear', 'calendar', 'Rekap tahunan', 'Setahun keuanganmu dalam satu halaman') +
     rowLink('openSheet', 'sheet', 'Buka data di Google Sheets', 'Data tersimpan di Drive milikmu', 'var(--green)') +
     rowLink('syncNowMe', 'sync', 'Sinkronkan sekarang', 'Terakhir ' + ago(b.lastSync)) + '</section>' +
@@ -1135,7 +1135,7 @@ function planSeg(active) {
 }
 VIEWS.goals = function () {
   S.planTab = 'goals';
-  if (!isPremium()) return frame(header('Rencana', 'none') + planSeg('goals') + '<div class="cols"><div class="col">' + goalsLocked() + '</div></div>', { nav: 'plan' });
+  if (!isPremium()) return planLocked('goals');
   var g = need('goals', 'goals', {});
   var hdr = header('Rencana', 'none', '<button class="cbtn dark" data-act="goalNew" aria-label="Tambah goal">' + ic('plus') + '</button>') + planSeg('goals');
   if (!g) return frame(hdr + loading(), { nav: 'plan' });
@@ -1163,25 +1163,29 @@ VIEWS.goals = function () {
     (cards || '<div class="glass empty"><b>Belum ada goal</b>Buat goal pertama: dana darurat, liburan, atau menikah.<br><br><button class="btn btn-dark" data-act="goalNew">Buat goal</button></div>') + doneHtml + '</div></div>', { nav: 'plan' });
 };
 function upgradeOffer(p) {
-  var next = p.key === 'standard' ? 'pro' : 'premium';
-  var link = p.upgrade && p.upgrade[next];
-  var perks = next === 'pro' ? 'Riwayat email 1 tahun, Rekap tahunan lengkap dari Januari.' : 'Goals &amp; tabungan otomatis, riwayat email 5 tahun.';
-  return '<section class="navy-card pad" style="display:flex;flex-direction:column;gap:12px"><div><div class="small" style="color:var(--dark-text-3)">Upgrade ke</div><div style="font-size:24px;font-weight:800;letter-spacing:-.03em">' + (next === 'pro' ? 'Pro' : 'Premium') + ' · ' + esc((p.upgrade && p.upgrade.price) || 'Rp50rb') + '</div>' +
-    '<div class="small" style="margin-top:4px;color:var(--dark-text-2)">' + perks + ' Data kamu tetap.</div></div>' +
-    (link ? '<a class="btn btn-cta" href="' + esc(link) + '" target="_blank" rel="noopener">Beli upgrade' + ic('arrOut', 'ic-s') + '</a><div class="small" style="color:var(--dark-text-3)">Setelah bayar, kode upgrade dikirim otomatis ke emailmu. Masukkan di bawah.</div>'
-      : '<div class="small" style="color:var(--dark-text-3)">Hubungi penjual untuk membeli kode upgrade.</div>') + '</section>';
+  var perks = { platinum: 'Riwayat email 1 tahun, Rekap tahunan lengkap dari Januari.', diamond: 'Riwayat email 5 tahun, Alokasi bulanan, Goals &amp; tabungan otomatis.' };
+  return (p.upgrades || []).map(function (u, i) {
+    return '<section class="' + (u.to === 'diamond' ? 'navy-card' : 'glass') + ' pad" style="display:flex;flex-direction:column;gap:12px"><div><div class="small" style="color:' + (u.to === 'diamond' ? 'var(--dark-text-3)' : 'var(--ink-2)') + '">Upgrade ke</div>' +
+      '<div style="font-size:24px;font-weight:800;letter-spacing:-.03em">' + esc(u.name) + ' · ' + esc(u.price) + '</div>' +
+      '<div class="small" style="margin-top:4px;color:' + (u.to === 'diamond' ? 'var(--dark-text-2)' : 'var(--ink-2)') + '">' + perks[u.to] + ' Data kamu tetap.</div></div>' +
+      (u.link ? '<a class="btn ' + (u.to === 'diamond' ? 'btn-cta' : 'btn-dark') + '" href="' + esc(u.link) + '" target="_blank" rel="noopener">Beli upgrade ke ' + esc(u.name) + ic('arrOut', 'ic-s') + '</a>'
+        : '<div class="small" style="color:' + (u.to === 'diamond' ? 'var(--dark-text-3)' : 'var(--ink-2)') + '">Hubungi penjual untuk membeli kode upgrade.</div>') + '</section>';
+  }).join('') + ((p.upgrades || []).some(function (u) { return u.link; }) ? '<p class="small muted center" style="margin:0">Setelah bayar, kode upgrade dikirim ke emailmu. Masukkan di bawah.</p>' : '');
 }
 
-function goalsLocked() {
-  return '<section class="navy-card pad" style="padding:22px"><span style="width:52px;height:52px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('target', 'ic-l') + '</span>' +
-    '<div style="margin-top:14px;font-size:22px;font-weight:800;letter-spacing:-.03em">Goals &amp; tabungan ada di Premium</div>' +
-    '<p style="margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--dark-text-2)">Buat target seperti dana darurat, liburan, atau menikah. Hubungkan ke rekening tabungan, dan setiap transfer ke sana otomatis menambah progres.</p>' +
-    '<button class="btn btn-cta" data-act="openLicense" style="margin-top:18px">' + ic('lock', 'ic-s') + 'Masukkan kode upgrade</button></section>';
+function planLocked(tab) {
+  var hdr = header('Rencana', 'none') + planSeg(tab);
+  return frame(hdr + '<div class="cols"><div class="col"><section class="navy-card pad" style="padding:22px"><span style="width:52px;height:52px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic(tab === 'alloc' ? 'pie' : 'target', 'ic-l') + '</span>' +
+    '<div style="margin-top:14px;font-size:22px;font-weight:800;letter-spacing:-.03em">' + (tab === 'alloc' ? 'Alokasi bulanan' : 'Goals &amp; tabungan') + ' ada di Diamond</div>' +
+    '<p style="margin:8px 0 0;font-size:14px;line-height:1.55;color:var(--dark-text-2)">' + (tab === 'alloc'
+      ? 'Bagi pemasukan ke kebutuhan, keinginan, dan tabungan. Lihat jatah tiap kategori, jatah aman per hari, dan peringatan sebelum kebablasan.'
+      : 'Buat target seperti dana darurat, liburan, atau menikah. Hubungkan ke rekening tabungan, dan setiap transfer ke sana otomatis menambah progres.') + '</p>' +
+    '<button class="btn btn-cta" data-act="openLicense" style="margin-top:18px">' + ic('lock', 'ic-s') + 'Lihat cara upgrade</button></section></div></div>', { nav: 'plan' });
 }
 
 VIEWS.license = function () {
   var p = plan(), L = S.lic || (S.lic = { code: '', err: '' });
-  var cols = ['standard', 'pro', 'premium'], names = ['Standard', 'Pro', 'Premium'];
+  var cols = ['gold', 'platinum', 'diamond'], names = ['Gold', 'Platinum', 'Diamond'];
   var cell = function (v) { return v === true ? '<span style="color:var(--green)">' + ic('check', 'ic-s') + '</span>' : v === false ? '<span style="color:var(--ink-3)">—</span>' : '<b style="font-size:12px">' + esc(v) + '</b>'; };
   var table = '<section class="glass" style="padding:8px 12px;border-radius:26px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">' +
     '<thead><tr><th style="text-align:left;padding:10px 4px;font-size:12px;color:var(--ink-2)">Fitur</th>' + names.map(function (n, i) {
@@ -1194,8 +1198,8 @@ VIEWS.license = function () {
     '<section class="navy-card pad"><div class="small" style="color:var(--dark-text-3)">Versi kamu sekarang</div><div style="margin-top:4px;font-size:30px;font-weight:800;letter-spacing:-.04em">' + esc(p.name) + '</div>' +
     '<div class="small" style="margin-top:6px;color:var(--dark-text-3)">Riwayat email dibaca sejak ' + fmtDate(p.historyFrom) + (p.code ? ' · kode ' + esc(p.code) : '') + '</div></section>' +
     table +
-    (p.key === 'premium' ? '' : upgradeOffer(p) +
-      '<section class="glass pad" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="lic-code">Sudah punya kode upgrade?</label><input id="lic-code" class="inp" data-input="licCode" value="' + esc(L.code) + '" placeholder="PRO-XXXX-XXXX atau PRM-XXXX-XXXX" autocapitalize="characters" style="letter-spacing:.06em"></div>' +
+    (p.key === 'diamond' ? '' : upgradeOffer(p) +
+      '<section class="glass pad" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="lic-code">Sudah punya kode upgrade?</label><input id="lic-code" class="inp" data-input="licCode" value="' + esc(L.code) + '" placeholder="mis. PLT-XXXX-XXXX" autocapitalize="characters" style="letter-spacing:.06em"></div>' +
       (L.err ? '<div class="err">' + esc(L.err) + '</div>' : '') +
       '<button class="btn btn-dark" data-act="licActivate"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'Memeriksa…' : 'Aktifkan') + '</button>' +
       '<span class="small muted" style="text-align:center">Data kamu tetap. Setelah upgrade, riwayat email yang lebih lama diambil otomatis.</span></section>'));
@@ -1244,6 +1248,7 @@ VIEWS.goalEdit = function () {
    ================================================================ */
 VIEWS.alloc = function () {
   S.planTab = 'alloc';
+  if (!hasAlloc()) return planLocked('alloc');
   var m = ym();
   var d = need('alloc:' + m, 'allocation', { month: m });
   var editing = !!S.ae;

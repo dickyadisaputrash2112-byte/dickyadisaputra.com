@@ -31,7 +31,7 @@ if (!process.env.NO_HISTORY) {
   }
 }
 const server = http.createServer((req, res) => {
-  if (req.url === '/__code') { res.end(JSON.stringify({ code: mkCode('PRM', 'DEMO') })); return; }
+  if (req.url === '/__code') { res.end(JSON.stringify({ code: mkCode('DMD', 'DEMA'), dup: mkCode('DUP', 'DEMA') })); return; }
   if (req.url === '/__mail') { res.end(JSON.stringify(g._sent[g._sent.length - 1] || {})); return; }
   if (req.url === '/api') {
     let body = ''; req.on('data', c => body += c); req.on('end', () => {

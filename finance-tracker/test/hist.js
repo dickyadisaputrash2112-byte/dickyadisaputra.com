@@ -17,7 +17,7 @@ g.GmailApp.search = (q, start, max) => {
   return hit.slice(start, start + max).map(m => ({ getMessages: () => [m] }));
 };
 g.setupApp(); if (process.env.CAP) g.SYNC_CONFIG.maxMessagesPerRun = Number(process.env.CAP);
-g.api('activate', { code: mkCode(process.env.PLAN || 'PRO', 'TEST') });
+g.api('activate', { code: mkCode(process.env.PLAN || 'PLT', 'TEST') });
 let r = g.api('sync', { daysBack: 30 }); console.log(JSON.stringify(r).slice(0,300)); r = r.data;
 console.log('first', r.saved, JSON.stringify(r.backfill));
 let n = 0;

@@ -96,10 +96,12 @@ function homeData(p) {
   var prevSame = sum_(all.filter(function (t) { return isOut_(t) && inRange_(t, pStart, pCut); }));
 
   var bb = budgetBase_(income);
+  // Batas & jatah per kategori berasal dari Alokasi bulanan (khusus Diamond).
+  if (!plan_().alloc) bb = { budget: 0, base: bb.base };
   var daysLeft = isCur ? b.daysIn - day + 1 : 0;
   var left = bb.budget - spent;
 
-  var cb = categoryBudgets_(all, bb.base).byCategory;
+  var cb = plan_().alloc ? categoryBudgets_(all, bb.base).byCategory : {};
   var byCat = {};
   month.filter(isOut_).forEach(function (t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
   var cats = Object.keys(byCat).map(function (name) {

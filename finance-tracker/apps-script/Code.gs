@@ -60,10 +60,10 @@ function ensureStartSheet_(ss) {
   sh.setHiddenGridlines(true);
 }
 
-// Penjual memakai ini di template master Pro/Premium; pembeli juga bisa memakainya untuk upgrade.
+// Penjual memakai ini di template master Platinum/Diamond; pembeli juga bisa memakainya untuk upgrade.
 function menuPlanCode() {
   var ui = SpreadsheetApp.getUi();
-  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PRO-XXXX-XXXX atau PRM-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
+  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PLT-XXXX-XXXX atau DMD-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
   if (r.getSelectedButton() !== ui.Button.OK) return;
   try {
     var info = activatePlan_(r.getResponseText());
