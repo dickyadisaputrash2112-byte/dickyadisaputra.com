@@ -16,6 +16,20 @@ add('BCA <bca@bca.co.id>', 'Transaksi QRIS Berhasil', `Transaksi QRIS berhasil\n
 add('BCA <bca@bca.co.id>', 'Transaksi Berhasil', `Transfer berhasil\nPenerima : ANDI WIJAYA\nNominal : IDR 300,000.00`, d(1,16));
 const g = create({ threads: [M] });
 g.onOpen();
+// Riwayat Jan–Okt supaya rekap tahunan punya isi (tercatat sebagai transaksi email)
+if (!process.env.NO_HISTORY) {
+  g.ensureSetup_();
+  const hist = [['Kopi Kenangan', 27500, 'Jago'], ['Indomaret', 86400, 'Mandiri'], ['Grab', 23000, 'Jago'], ['PLN Prabayar', 200000, 'Mandiri'], ['Tokopedia', 189000, 'Jago'], ['Mie Gacoan', 52000, 'Mandiri']];
+  const year = now.getFullYear();
+  for (let mo = 0; mo < now.getMonth(); mo++) {
+    g.addTransaction({ date: new Date(year, mo, 1, 9), description: 'Transfer masuk · PT MAJU JAYA', amount: 7500000, type: 'Income', account: 'Jago', source: 'email', emailId: 'h-in-' + mo });
+    const n = 14 + (mo * 7) % 11;
+    for (let k = 0; k < n; k++) {
+      const m = hist[(k + mo) % hist.length];
+      g.addTransaction({ date: new Date(year, mo, 1 + (k * 2) % 27, 12), description: m[0], merchant: m[0], amount: Math.round(m[1] * (0.8 + ((k * mo) % 7) / 10)), type: 'Expense', account: m[2], source: 'email', emailId: 'h-' + mo + '-' + k });
+    }
+  }
+}
 const server = http.createServer((req, res) => {
   if (req.url === '/api') {
     let body = ''; req.on('data', c => body += c); req.on('end', () => {

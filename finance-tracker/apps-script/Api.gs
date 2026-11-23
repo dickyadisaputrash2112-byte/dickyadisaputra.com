@@ -107,6 +107,7 @@ var API = {
   },
 
   insight: function (p) { return insightData(p); },
+  year: function (p) { return yearData(p); },
 
   goals: function () { return goals_(); },
   goal: function (p) {

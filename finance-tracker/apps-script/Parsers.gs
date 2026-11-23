@@ -166,7 +166,7 @@ function sourceByText_(s) {
   return best;
 }
 
-// Nama akun pengguna untuk teks bebas, mis. "DICKY Bank Syariah Indonesia • 123" → "BSI"
+// Nama akun pengguna untuk teks bebas, mis. "ANDI Bank Syariah Indonesia • 123" → "BSI"
 function detectAccountName_(s, accountNames) {
   var src = sourceByText_(s);
   if (!src) return '';

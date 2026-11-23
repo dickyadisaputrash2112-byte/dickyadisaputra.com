@@ -258,6 +258,85 @@ function insightData(p) {
   };
 }
 
+// ---------------- Rekap tahunan ----------------
+
+function yearData(p) {
+  var all = txRows_();
+  var now = new Date();
+  var y = Number(p && p.year) || now.getFullYear();
+  var start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
+  var years = {};
+  all.forEach(function (t) { if (t.date) years[t.date.getFullYear()] = true; });
+  years[now.getFullYear()] = true;
+
+  var rows = all.filter(function (t) { return inRange_(t, start, end); });
+  var outs = rows.filter(isOut_), ins = rows.filter(isIn_);
+  var spent = sum_(outs), income = sum_(ins);
+
+  var months = [];
+  for (var m = 0; m < 12; m++) months.push({ m: m, spent: 0, income: 0, count: 0 });
+  outs.forEach(function (t) { months[t.date.getMonth()].spent += t.amount; months[t.date.getMonth()].count++; });
+  ins.forEach(function (t) { months[t.date.getMonth()].income += t.amount; });
+  var active = months.filter(function (x) { return x.spent > 0; });
+  var top = active.slice().sort(function (a, b) { return b.spent - a.spent; })[0] || null;
+  var low = active.slice().sort(function (a, b) { return a.spent - b.spent; })[0] || null;
+
+  var groups = { need: 0, want: 0, other: 0 }, byCat = {}, merchants = {}, byAcct = {}, days = {};
+  var biggest = null;
+  outs.forEach(function (t) {
+    var g = groupOfCategory_(t.category);
+    if (g === GROUP.NEED) groups.need += t.amount; else if (g === GROUP.WANT) groups.want += t.amount; else groups.other += t.amount;
+    byCat[t.category] = (byCat[t.category] || 0) + t.amount;
+    byAcct[t.account] = (byAcct[t.account] || 0) + t.amount;
+    days[ymd_(t.date)] = true;
+    var k = t.merchant || t.description;
+    if (!merchants[k]) merchants[k] = { name: k, amount: 0, count: 0 };
+    merchants[k].amount += t.amount; merchants[k].count++;
+    if (!biggest || t.amount > biggest.amount) biggest = t;
+  });
+  var cats = Object.keys(byCat).map(function (name) {
+    var c = categoryByName_(name);
+    return { name: name, key: c ? c.key : keyForCategoryName_(name), color: c ? c.color : '#5F646C', amount: byCat[name], pct: spent ? Math.round(byCat[name] / spent * 100) : 0 };
+  }).sort(function (a, b) { return b.amount - a.amount; });
+  var mlist = Object.keys(merchants).map(function (k) { return merchants[k]; });
+  var auto = rows.filter(function (t) { return t.source === 'email'; }).length;
+
+  var saved = 0;
+  try {
+    rows_(SHEET.DEPOSITS).forEach(function (d) {
+      var dd = toDate_(d.Date);
+      if (dd && dd >= start && dd < end && d.Source !== 'initial') saved += Number(d.Amount) || 0;
+    });
+  } catch (e) {}
+
+  var monthsElapsed = y < now.getFullYear() ? 12 : y > now.getFullYear() ? 0 : now.getMonth() + 1;
+  return {
+    year: y,
+    years: Object.keys(years).map(Number).sort(),
+    isCurrent: y === now.getFullYear(),
+    spent: spent,
+    income: income,
+    leftover: income - spent,
+    savingRate: income > 0 ? Math.round((income - spent) / income * 100) : null,
+    avgPerMonth: Math.round(spent / Math.max(1, active.length)),
+    monthsElapsed: monthsElapsed,
+    months: months,
+    topMonth: top, lowMonth: low,
+    groups: groups,
+    cats: cats.slice(0, 8),
+    merchants: mlist.slice().sort(function (a, b) { return b.amount - a.amount; }).slice(0, 5),
+    frequent: mlist.slice().sort(function (a, b) { return b.count - a.count; })[0] || null,
+    biggest: biggest ? { description: biggest.description, amount: biggest.amount, date: biggest.date, category: biggest.category, account: biggest.account } : null,
+    accounts: Object.keys(byAcct).map(function (k) { return { name: k, amount: byAcct[k] }; }).sort(function (a, b) { return b.amount - a.amount; }),
+    count: rows.length,
+    autoCount: auto,
+    manualCount: rows.length - auto,
+    minutesSaved: auto,
+    spendDays: Object.keys(days).length,
+    goalSaved: saved
+  };
+}
+
 // ---------------- Alokasi bulanan ----------------
 
 function allocationData(p) {

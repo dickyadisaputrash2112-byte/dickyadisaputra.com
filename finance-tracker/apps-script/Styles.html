@@ -298,5 +298,14 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
   .toast-wrap { top: 24px; }
 }
 
+@media print {
+  .nav, .fab, .hdr .cbtn, .no-print, .toast-wrap { display: none !important; }
+  body, .frame { background: #fff !important; }
+  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: #F3F5FA; box-shadow: none; }
+  .page { padding: 12px !important; max-width: none !important; }
+  .cols { display: block; }
+  section, .glass, .navy-card { break-inside: avoid; margin-bottom: 10px; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>

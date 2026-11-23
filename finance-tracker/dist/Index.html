@@ -308,6 +308,15 @@ html[data-theme="grafit"] { --ink: #15181E; --ink-2: #272B33; --ink-3: #3A3F4A; 
   .toast-wrap { top: 24px; }
 }
 
+@media print {
+  .nav, .fab, .hdr .cbtn, .no-print, .toast-wrap { display: none !important; }
+  body, .frame { background: #fff !important; }
+  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: #F3F5FA; box-shadow: none; }
+  .page { padding: 12px !important; max-width: none !important; }
+  .cols { display: block; }
+  section, .glass, .navy-card { break-inside: avoid; margin-bottom: 10px; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
 
@@ -691,7 +700,7 @@ VIEWS.ob = function () {
       '<h1 class="d-title">Kenalan dulu,<br><span>siapa namamu?</span></h1>' +
       '<p class="d-lede">Kami juga perlu nama yang tertulis di rekeningmu.</p>' +
       '<div style="display:flex;flex-direction:column;gap:18px;flex:1">' +
-      '<div><label class="d-label" for="ob-nick">Nama panggilan</label><input class="d-input" id="ob-nick" data-input="obNick" value="' + esc(o.nickname) + '" placeholder="mis. Dicky" autocomplete="given-name"></div>' +
+      '<div><label class="d-label" for="ob-nick">Nama panggilan</label><input class="d-input" id="ob-nick" data-input="obNick" value="' + esc(o.nickname) + '" placeholder="mis. Andi" autocomplete="given-name"></div>' +
       '<div><label class="d-label" for="ob-owner">Nama di rekening</label>' + ownerTags(o.owners, 'ob') + '</div>' +
       '<div class="d-card d-note"><span class="nic">' + ic('swap') + '</span><div><b>Transfer ke rekening sendiri</b> tidak akan dihitung sebagai pengeluaran. Tulis nama persis seperti di rekening, tekan Enter untuk menambah.</div></div>' +
       '</div><button class="btn btn-cta" data-act="obNext" style="margin-top:20px">Lanjut' + ic('right') + '</button>');
@@ -720,7 +729,7 @@ VIEWS.ob = function () {
 function ownerTags(list, scope) {
   return '<div class="tags">' + list.map(function (n, i) {
     return '<span class="tag">' + esc(n) + '<button data-act="ownerDel" data-scope="' + scope + '" data-i="' + i + '" aria-label="Hapus ' + esc(n) + '">' + ic('x', 'ic-s') + '</button></span>';
-  }).join('') + '<input id="' + scope + '-owner" data-enter="ownerAdd" data-scope="' + scope + '" placeholder="' + (list.length ? 'Tambah ejaan lain…' : 'mis. DICKY ADISAPUTRA') + '"></div>';
+  }).join('') + '<input id="' + scope + '-owner" data-enter="ownerAdd" data-scope="' + scope + '" placeholder="' + (list.length ? 'Tambah ejaan lain…' : 'mis. ANDI PRATAMA') + '"></div>';
 }
 
 function sourcesView(scope) {
@@ -1159,13 +1168,88 @@ VIEWS.insight = function () {
   var merchants = d.merchants.map(function (mm, i) {
     return '<div class="trow"><span class="ticon" style="width:32px;height:32px;background:rgba(255,255,255,0.7);font-size:13px;font-weight:800">' + (i + 1) + '</span><span class="tmain"><span class="ttitle">' + esc(mm.name) + '</span><span class="tmeta">' + mm.count + ' transaksi</span></span><span class="tamt"><b>' + short(mm.amount) + '</b></span></div>';
   }).join('');
-  return frame(hdr + label + '<div class="cols"><div class="col">' +
+  var yearBanner = '<button class="navy-card" data-act="openYear" style="display:flex;align-items:center;gap:14px;padding:10px 10px 10px 12px;border-radius:99px;text-align:left"><span style="width:44px;height:44px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center;flex-shrink:0">' + ic('calendar') + '</span><span style="flex:1"><b style="display:block;font-size:15px">Rekap tahunan ' + new Date().getFullYear() + '</b><span style="font-size:12px;color:var(--dark-text-3)">Setahun keuanganmu dalam satu halaman</span></span><span style="width:44px;height:44px;border-radius:99px;background:#fff;color:var(--navy);display:grid;place-items:center">' + ic('right') + '</span></button>';
+  return frame(hdr + label + yearBanner + '<div class="cols"><div class="col">' +
     '<section class="glass pad"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><span style="font-size:24px;font-weight:800;letter-spacing:-.04em">' + short(d.avg7) + '</span> <span class="small" style="font-weight:600;color:var(--ink-2)">rata-rata / hari, 7 hari terakhir</span></div></div>' + bars +
     '<div class="small" style="margin-top:10px;font-weight:600;color:var(--ink-2)">Total ' + ymLabel(m) + ': <b style="color:var(--ink)">' + rp(d.spent) + '</b></div></section>' + cash +
     '<section class="grid2"><div class="navy-card" style="padding:16px;border-radius:28px"><span style="width:42px;height:42px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('shield') + '</span><div style="margin-top:22px;font-size:13px;font-weight:600;color:var(--dark-text-3)">Kebutuhan</div><div style="font-size:26px;font-weight:800;letter-spacing:-.04em">' + (100 - wantPct) + '%</div><div class="small" style="color:var(--dark-text-3)">' + short(g.need) + '</div></div>' +
     '<div class="glass" style="padding:16px;border-radius:28px"><span style="width:42px;height:42px;border-radius:99px;background:#fff;color:#D9652B;display:grid;place-items:center">' + ic('heart') + '</span><div style="margin-top:22px;font-size:13px;font-weight:600;color:var(--ink-2)">Keinginan</div><div style="font-size:26px;font-weight:800;letter-spacing:-.04em">' + wantPct + '%</div><div class="small" style="font-weight:600;color:var(--ink-2)">' + (wantPct <= 30 ? 'Di bawah batas 30% ✓' : 'Di atas batas 30%') + '</div></div></section></div><div class="col">' +
     (cats ? '<div class="sec-head"><h2>Semua kategori</h2></div><div class="cat-grid">' + cats + '</div>' : '<div class="glass empty"><b>Belum ada pengeluaran</b>di bulan ini.</div>') +
     (merchants ? '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Merchant teratas</h2></div>' + merchants + '</section>' : '') + '</div></div>', { nav: 'insight' });
+};
+
+/* ================================================================
+   REKAP TAHUNAN
+   ================================================================ */
+VIEWS.year = function () {
+  var y = S.year || new Date().getFullYear();
+  var d = need('year:' + y, 'year', { year: y });
+  var hasPrev = d && !d.__error && d.years.indexOf(y - 1) > -1;
+  var hdr = header('Rekap ' + y, null, '<span style="display:flex;gap:8px"><button class="cbtn" data-act="yearShift" data-v="-1" aria-label="Tahun sebelumnya"' + (d && !d.__error && !hasPrev ? ' disabled style="opacity:.4"' : '') + '>' + ic('back') + '</button>' +
+    '<button class="cbtn" data-act="yearShift" data-v="1" aria-label="Tahun berikutnya"' + (y >= new Date().getFullYear() ? ' disabled style="opacity:.4"' : '') + '>' + ic('right') + '</button></span>');
+  if (!d) return frame(hdr + loading('Menghitung setahun…'), { wide: true });
+  if (d.__error) return frame(hdr + errBox(d), { wide: true });
+  if (!d.count) return frame(hdr + '<div class="glass empty"><b>Belum ada catatan di ' + y + '</b>Rekap muncul setelah transaksi tercatat.</div>', { wide: true });
+
+  var hours = Math.floor(d.minutesSaved / 60), mins = d.minutesSaved % 60;
+  var saveTime = hours ? hours + ' jam' + (mins ? ' ' + mins + ' menit' : '') : mins + ' menit';
+  var hero = '<section class="navy-card pad" style="padding:22px"><div class="small" style="color:var(--dark-text-3);font-weight:700;letter-spacing:.04em;text-transform:uppercase">' + (d.isCurrent ? 'Setahun ini, sejauh ini' : 'Setahun penuh ' + y) + '</div>' +
+    '<div style="margin-top:10px;font-size:44px;font-weight:800;letter-spacing:-.05em;line-height:1">' + d.autoCount.toLocaleString('id-ID') + '</div>' +
+    '<div style="margin-top:6px;font-size:17px;font-weight:700">transaksi tercatat otomatis, tanpa kamu mencatat.</div>' +
+    '<div class="grid2" style="margin-top:18px"><div class="tile" style="background:rgba(255,255,255,0.1);color:#fff"><small style="color:var(--dark-text-3)">Dicatat manual</small><b>' + d.manualCount + ' kali</b></div>' +
+    '<div class="tile" style="background:rgba(255,255,255,0.1);color:#fff"><small style="color:var(--dark-text-3)">Waktu yang dihemat</small><b>± ' + saveTime + '</b></div></div>' +
+    '<div class="small" style="margin-top:10px;color:var(--dark-text-3)">Perkiraan 1 menit per transaksi yang tidak perlu kamu catat sendiri.</div></section>';
+
+  var flow = '<section class="grid3"><div class="glass pad-s center" style="border-radius:22px"><div class="small" style="font-weight:600;color:var(--ink-2)">Pemasukan</div><b style="font-size:16px;color:var(--green)">' + short(d.income) + '</b></div>' +
+    '<div class="glass pad-s center" style="border-radius:22px"><div class="small" style="font-weight:600;color:var(--ink-2)">Pengeluaran</div><b style="font-size:16px">' + short(d.spent) + '</b></div>' +
+    '<div class="tile navy center" style="border-radius:22px"><small>Sisa</small><b style="color:var(--ice)">' + (d.savingRate === null ? short(d.leftover) : d.savingRate + '%') + '</b></div></section>';
+
+  var max = Math.max.apply(null, d.months.map(function (m) { return Math.max(m.spent, m.income); }).concat([1]));
+  var chart = '<section class="glass pad"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b style="font-size:17px">Bulan demi bulan</b><span class="small" style="font-weight:600;color:var(--ink-2)">rata-rata keluar ' + short(d.avgPerMonth) + '/bln</span></div>' +
+    '<div role="img" aria-label="Pemasukan dan pengeluaran per bulan ' + y + '" style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end;height:160px;margin-top:16px">' +
+    d.months.map(function (m) {
+      var hi = Math.round(m.income / max * 130), ho = Math.round(m.spent / max * 130);
+      var peak = d.topMonth && d.topMonth.m === m.m;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="display:flex;gap:2px;align-items:flex-end;height:130px">' +
+        '<span style="width:6px;height:' + Math.max(hi, m.income ? 3 : 0) + 'px;border-radius:9px;background:var(--green);opacity:.75"></span>' +
+        '<span style="width:6px;height:' + Math.max(ho, m.spent ? 3 : 0) + 'px;border-radius:9px;background:' + (peak ? 'var(--orange)' : 'var(--navy)') + '"></span></div>' +
+        '<span style="font-size:10px;font-weight:700;color:var(--ink-3)">' + MONTHS[m.m].slice(0, 3) + '</span></div>';
+    }).join('') + '</div>' +
+    '<div style="display:flex;gap:14px;margin-top:10px;font-size:11px;font-weight:700;color:var(--ink-2)"><span><i style="display:inline-block;width:8px;height:8px;border-radius:9px;background:var(--green);margin-right:5px"></i>Masuk</span><span><i style="display:inline-block;width:8px;height:8px;border-radius:9px;background:var(--navy);margin-right:5px"></i>Keluar</span><span><i style="display:inline-block;width:8px;height:8px;border-radius:9px;background:var(--orange);margin-right:5px"></i>Bulan paling boros</span></div></section>';
+
+  var hl = function (icon, label, value, sub, color) {
+    return '<div class="glass" style="padding:14px;border-radius:24px;min-width:0"><span style="width:36px;height:36px;border-radius:99px;background:#fff;color:' + (color || 'var(--navy)') + ';display:grid;place-items:center">' + ic(icon, 'ic-s') + '</span>' +
+      '<div class="small" style="margin-top:10px;font-weight:600;color:var(--ink-2)">' + label + '</div><div style="font-size:17px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + value + '</div><div class="small muted" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div></div>';
+  };
+  var highlights = '<div class="grid2">' +
+    (d.topMonth ? hl('arrOut', 'Bulan paling boros', MONTHS[d.topMonth.m], short(d.topMonth.spent), '#D9652B') : '') +
+    (d.lowMonth ? hl('shield', 'Bulan paling hemat', MONTHS[d.lowMonth.m], short(d.lowMonth.spent), 'var(--green)') : '') +
+    (d.biggest ? hl('bolt', 'Transaksi terbesar', esc(d.biggest.description), rp(d.biggest.amount) + ' · ' + shortDate(d.biggest.date)) : '') +
+    (d.frequent ? hl('coffee', 'Paling sering', esc(d.frequent.name), d.frequent.count + '× · ' + short(d.frequent.amount), '#9A5A22') : '') +
+    hl('target', 'Ditabung ke goals', short(d.goalSaved), 'setoran sepanjang ' + y, 'var(--navy-2)') +
+    hl('calendar', 'Hari ada pengeluaran', d.spendDays + ' hari', 'dari ' + (d.isCurrent ? 'tahun berjalan' : '365 hari')) +
+    '</div>';
+
+  var g = d.groups, gt = g.need + g.want || 1, wantPct = Math.round(g.want / gt * 100);
+  var split = '<section class="glass pad"><div style="display:flex;justify-content:space-between"><b style="font-size:16px">Kebutuhan vs keinginan</b><span class="pill ' + (wantPct <= 30 ? 'navy' : 'orange') + '">Keinginan ' + wantPct + '%</span></div>' +
+    '<div style="display:flex;gap:4px;height:14px;margin-top:14px"><span style="flex:' + (g.need || 1) + ';border-radius:99px 4px 4px 99px;background:var(--navy)"></span><span style="flex:' + (g.want || 0.0001) + ';border-radius:4px 99px 99px 4px;background:var(--orange)"></span></div>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;font-weight:700;color:var(--ink-2)"><span>Kebutuhan ' + short(g.need) + '</span><span>Keinginan ' + short(g.want) + '</span></div></section>';
+
+  var cats = d.cats.map(function (c) {
+    return '<div class="glass cat-mini">' + ring(c.pct, c.color, 54, 42, catIcon(c.key, c.name)) + '<span style="min-width:0"><span style="display:block;font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.name) + '</span><b style="display:block;font-size:16px">' + short(c.amount) + '</b><span style="font-size:11px;font-weight:700;color:var(--ink-2)">' + c.pct + '% setahun</span></span></div>';
+  }).join('');
+  var merchants = d.merchants.map(function (mm, i) {
+    return '<div class="trow"><span class="ticon" style="width:32px;height:32px;background:rgba(255,255,255,0.7);font-size:13px;font-weight:800">' + (i + 1) + '</span><span class="tmain"><span class="ttitle">' + esc(mm.name) + '</span><span class="tmeta">' + mm.count + ' transaksi</span></span><span class="tamt"><b>' + short(mm.amount) + '</b></span></div>';
+  }).join('');
+  var accts = d.accounts.map(function (a) {
+    return '<div class="trow">' + logo(a.name, 36) + '<span class="tmain"><span class="ttitle">' + esc(a.name) + '</span></span><span class="tamt"><b>' + short(a.amount) + '</b></span></div>';
+  }).join('');
+
+  return frame(hdr + '<div class="cols"><div class="col">' + hero + flow + chart + split + '</div><div class="col">' + highlights +
+    '<div class="sec-head"><h2>Kategori terbesar</h2></div><div class="cat-grid">' + cats + '</div>' +
+    '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Merchant teratas</h2></div>' + merchants + '</section>' +
+    (accts ? '<section class="glass list"><div class="sec-head" style="padding:10px 4px 4px"><h2 style="font-size:17px">Keluar per rekening</h2></div>' + accts + '</section>' : '') +
+    '<button class="btn btn-dark no-print" data-act="printYear">' + ic('arrOut', 'ic-s') + 'Simpan sebagai PDF</button></div></div>', { wide: true });
 };
 
 /* ================================================================
@@ -1201,6 +1285,7 @@ VIEWS.me = function () {
     rowToggle('set-ti', 'arrIn', 'Catat pemasukan', 'Gaji &amp; transfer masuk otomatis', b.settings.trackIncome, 'setTrack') +
     rowToggle('set-wk', 'calendar', 'Review mingguan', 'Email tiap Minggu sore', b.settings.weeklyReviewEnabled, 'setWeekly') +
     rowToggle('set-pin', 'lock', 'Kunci dengan PIN', b.hasPin ? 'Aktif' : 'Belum diatur', b.hasPin, 'setPin') +
+    rowLink('openYear', 'calendar', 'Rekap tahunan', 'Setahun keuanganmu dalam satu halaman') +
     rowLink('openSheet', 'sheet', 'Buka data di Google Sheets', 'Data tersimpan di Drive milikmu', 'var(--green)') +
     rowLink('syncNowMe', 'sync', 'Sinkronkan sekarang', 'Terakhir ' + ago(b.lastSync)) + '</section>' +
     '<p class="center small muted">catat.id v' + esc(b.app.version) + '</p></div></div>', { nav: 'me' });
@@ -1352,6 +1437,9 @@ var ACT = {
     if (ds.r === 'tx') { /* tetap filter terakhir */ }
     go(ds.r);
   },
+  openYear: function () { S.year = new Date().getFullYear(); go('year'); },
+  yearShift: function (ds) { S.year = (S.year || new Date().getFullYear()) + Number(ds.v); render(); },
+  printYear: function () { window.print(); },
   quickOpen: function () {
     addInit(); S.quick = true; render();
     var el = document.getElementById('add-text'); if (el) el.focus();
