@@ -64,6 +64,39 @@ var API = {
     return { ok: true };
   },
 
+  // Lupa PIN: kode 6 angka dikirim ke email pemilik akun, berlaku 10 menit, maksimal 5 kali coba.
+  forgotPinSend: function () {
+    var up = PropertiesService.getUserProperties();
+    if (!up.getProperty('JEJAK_PIN')) return { ok: true, noPin: true };
+    var old = JSON.parse(up.getProperty('JEJAK_PIN_RESET') || 'null');
+    if (old && Date.now() - old.sent < 60000) throw new Error('Kode baru saja dikirim. Tunggu 1 menit sebelum minta lagi.');
+    var to = Session.getEffectiveUser().getEmail();
+    if (!to) throw new Error('Email akun tidak terbaca. Pakai menu catat.id → Reset PIN aplikasi di spreadsheet.');
+    var code = String(Math.floor(100000 + Math.random() * 900000));
+    up.setProperty('JEJAK_PIN_RESET', JSON.stringify({ h: hashPin_(code), exp: Date.now() + 10 * 60000, sent: Date.now(), tries: 0 }));
+    MailApp.sendEmail({
+      to: to,
+      subject: 'Kode reset PIN catat.id: ' + code,
+      body: 'Kode untuk mengatur ulang PIN catat.id kamu:\n\n' + code + '\n\nBerlaku 10 menit. Kalau kamu tidak meminta reset PIN, abaikan email ini; PIN lama tetap berlaku.\n\n— catat.id'
+    });
+    return { ok: true, email: maskEmail_(to) };
+  },
+  forgotPinVerify: function (p) {
+    var up = PropertiesService.getUserProperties();
+    var r = JSON.parse(up.getProperty('JEJAK_PIN_RESET') || 'null');
+    if (!r) throw new Error('Minta kode dulu.');
+    if (Date.now() > r.exp) { up.deleteProperty('JEJAK_PIN_RESET'); throw new Error('Kode sudah kedaluwarsa. Minta kode baru.'); }
+    if (r.h !== hashPin_(String(p.code || '').trim())) {
+      r.tries++;
+      if (r.tries >= 5) { up.deleteProperty('JEJAK_PIN_RESET'); throw new Error('Terlalu banyak percobaan. Minta kode baru.'); }
+      up.setProperty('JEJAK_PIN_RESET', JSON.stringify(r));
+      throw new Error('Kode salah. Sisa ' + (5 - r.tries) + ' kali coba.');
+    }
+    up.deleteProperty('JEJAK_PIN_RESET');
+    up.deleteProperty('JEJAK_PIN');
+    return { ok: true };
+  },
+
   sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack }); },
 
   home: function (p) { return homeData(p); },
@@ -147,6 +180,11 @@ var API = {
     });
   }
 };
+
+function maskEmail_(e) {
+  var p = String(e).split('@');
+  return p[0].slice(0, 2) + '•••@' + (p[1] || '');
+}
 
 function hashPin_(pin) {
   var salt = PIN_PEPPER + ':' + ScriptApp.getScriptId();

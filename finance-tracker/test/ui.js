@@ -52,8 +52,21 @@ const { chromium } = require('playwright');
   await click('[data-act=back]');
   // reload → lock screen? sessionStorage persists across reload; clear it
   await p.evaluate(() => sessionStorage.clear()); await p.reload(); await p.waitForTimeout(900); await shot('28-lock');
-  for (const k of '123456') await click(`[data-act=pinKey][data-v="${k}"]`);
+  // lupa PIN: kirim kode ke email, masukkan kode, buat PIN baru 654321
+  await click('[data-act=forgotOpen]'); await shot('28b-forgot');
+  await click('[data-act=forgotSend]'); await p.waitForTimeout(700); await shot('28c-forgot-code');
+  const mail = await p.evaluate(() => fetch('/__mail').then(r => r.json()));
+  const code = (mail.subject || '').match(/(\d{6})/)[1];
+  await p.fill('#fp-code', '000000'); await p.dispatchEvent('#fp-code', 'input'); await click('#fp-go'); await p.waitForTimeout(500); await shot('28d-forgot-wrong');
+  await p.fill('#fp-code', code); await p.dispatchEvent('#fp-code', 'input'); await click('#fp-go'); await p.waitForTimeout(700); await shot('28e-new-pin');
+  for (const k of '654321') await click(`[data-act=pinKey][data-v="${k}"]`);
+  await p.waitForTimeout(300);
+  for (const k of '654321') await click(`[data-act=pinKey][data-v="${k}"]`);
   await p.waitForTimeout(900); await shot('29-after-unlock');
+  await p.evaluate(() => sessionStorage.clear()); await p.reload(); await p.waitForTimeout(900);
+  for (const k of '654321') await click(`[data-act=pinKey][data-v="${k}"]`);
+  await p.waitForTimeout(900);
+  console.log('unlocked with new PIN:', await p.evaluate(() => S.route));
   // tema + desktop
   await click('[data-act=go][data-r=me]'); await p.waitForTimeout(700);
   await click('[data-act=setTheme][data-v=hijau]'); await p.waitForTimeout(500); await shot('30-theme-hijau');

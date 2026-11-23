@@ -427,7 +427,7 @@ function sourcesView(scope) {
 
 function pinView(scope) {
   var confirming = !!S.pinFirst;
-  var title = scope === 'lock' ? 'Hai, <span>' + esc(nick()) + '</span>' : confirming ? 'Ulangi<br><span>PIN kamu.</span>' : 'Kunci dengan<br><span>PIN 6 digit.</span>';
+  var title = scope === 'lock' ? 'Hai, <span>' + esc(nick()) + '</span>' : scope === 'pinReset' && !confirming ? 'Buat<br><span>PIN baru.</span>' : confirming ? 'Ulangi<br><span>PIN kamu.</span>' : 'Kunci dengan<br><span>PIN 6 digit.</span>';
   var lede = scope === 'lock' ? 'Masukkan PIN untuk membuka catatanmu.' : confirming ? 'Masukkan sekali lagi untuk memastikan.' : 'Supaya catatan keuanganmu tetap pribadi.';
   var top = scope === 'ob' ? obTop(3, 4) : scope === 'pinSet' ? '<div class="top-progress"><button class="dbtn" data-act="back" aria-label="Kembali">' + ic('back') + '</button></div>' : '';
   var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
@@ -438,7 +438,7 @@ function pinView(scope) {
       return '<button class="key' + (k === 'del' ? ' ghost' : '') + '" data-act="pinKey" data-v="' + k + '" data-scope="' + scope + '" aria-label="' + (k === 'del' ? 'Hapus' : k) + '">' + (k === 'del' ? ic('back') : k) + '</button>';
     }).join('') + '</div>' +
     (S.busy ? '<div class="loading" style="color:#fff;padding:20px 0"><span class="spin"></span>Memeriksa…</div>' : '') +
-    (scope === 'lock' ? '<p class="center" style="margin:auto 0 0;font-size:12px;color:var(--dark-text-3)">Lupa PIN? Buka spreadsheet → menu catat.id → Reset PIN aplikasi.</p>' : ''));
+    (scope === 'lock' ? '<button class="btn-text" data-act="forgotOpen" style="margin:auto auto 0;height:44px;padding:0 16px;font-size:14px;font-weight:700;color:var(--ice)">Lupa PIN?</button>' : ''));
 }
 
 function finishOnboarding() {
@@ -493,6 +493,26 @@ function setUnlocked() { try { sessionStorage.setItem(SESSION_KEY, '1'); } catch
 function isUnlocked() { try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch (e) { return false; } }
 VIEWS.lock = function () { return pinView('lock'); };
 VIEWS.pinSet = function () { return pinView('pinSet'); };
+VIEWS.pinReset = function () { return pinView('pinReset'); };
+
+// Lupa PIN: kirim kode ke email → masukkan kode → buat PIN baru
+VIEWS.forgot = function () {
+  var F = S.forgot || (S.forgot = { sent: false, email: '', code: '', err: '' });
+  var top = '<div class="top-progress"><button class="dbtn" data-act="forgotBack" aria-label="Kembali">' + ic('back') + '</button></div>';
+  if (!F.sent) {
+    return darkFrame(top + '<h1 class="d-title">Lupa<br><span>PIN?</span></h1>' +
+      '<p class="d-lede">Kami kirim kode 6 angka ke email akun Google ini: <b style="color:#fff">' + esc(S.boot.email || 'email kamu') + '</b>. Kode berlaku 10 menit.</p>' +
+      '<div class="d-card d-note"><span class="nic">' + ic('mail') + '</span><div>Datamu tidak terhapus. Hanya PIN yang diatur ulang.</div></div>' +
+      (F.err ? '<div class="err" style="margin-top:14px">' + esc(F.err) + '</div>' : '') +
+      '<button class="btn btn-cta mt-auto" data-act="forgotSend" style="margin-top:20px"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'Mengirim…' : 'Kirim kode ke email') + '</button>');
+  }
+  return darkFrame(top + '<h1 class="d-title">Cek<br><span>email kamu.</span></h1>' +
+    '<p class="d-lede">Kode dikirim ke <b style="color:#fff">' + esc(F.email) + '</b>. Cek juga folder Spam.</p>' +
+    '<label class="d-label" for="fp-code">Kode 6 angka</label><input class="d-input" id="fp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" data-input="forgotCode" value="' + esc(F.code) + '" placeholder="••••••" style="font-size:28px;letter-spacing:.4em;text-align:center">' +
+    (F.err ? '<div class="err" style="margin-top:14px">' + esc(F.err) + '</div>' : '') +
+    '<button class="btn-text" data-act="forgotSend" style="margin:14px auto 0;color:var(--ice);font-weight:700">Kirim ulang kode</button>' +
+    '<button class="btn btn-cta mt-auto" id="fp-go" data-act="forgotVerify" style="margin-top:20px"' + (F.code.length === 6 && !S.busy ? '' : ' disabled') + '>' + (S.busy ? 'Memeriksa…' : 'Lanjut buat PIN baru') + '</button>');
+};
 
 function pinKey(v, scope) {
   if (S.busy) return;
@@ -515,7 +535,8 @@ function pinKey(v, scope) {
     if (scope === 'ob') { S.ob.pin = pin; S.pinFirst = ''; finishOnboarding(); return; }
     S.busy = true; render();
     api('setPin', { pin: pin }).then(function () {
-      S.busy = false; S.pin = ''; S.pinFirst = ''; S.boot.hasPin = true; setUnlocked(); toast('PIN aktif'); back();
+      S.busy = false; S.pin = ''; S.pinFirst = ''; S.boot.hasPin = true; setUnlocked();
+      if (scope === 'pinReset') { S.forgot = null; toast('PIN baru aktif'); go('home'); } else { toast('PIN aktif'); back(); }
     }).catch(fail);
   }, 120);
 }
@@ -1110,6 +1131,23 @@ var ACT = {
     if (ds.r === 'tx') { /* tetap filter terakhir */ }
     go(ds.r);
   },
+  forgotOpen: function () { S.forgot = null; S.pin = ''; go('forgot'); },
+  forgotBack: function () { S.forgot = null; go('lock', {}, true); },
+  forgotSend: function () {
+    var F = S.forgot; S.busy = true; F.err = ''; render();
+    api('forgotPinSend', {}).then(function (r) {
+      S.busy = false;
+      if (r.noPin) { S.forgot = null; setUnlocked(); go('home'); return; }
+      F.sent = true; F.email = r.email; F.code = ''; toast('Kode terkirim'); render();
+      var el = document.getElementById('fp-code'); if (el) el.focus();
+    }).catch(function (e) { S.busy = false; F.err = e.message; render(); });
+  },
+  forgotVerify: function () {
+    var F = S.forgot; S.busy = true; F.err = ''; render();
+    api('forgotPinVerify', { code: F.code }).then(function () {
+      S.busy = false; S.boot.hasPin = false; S.pin = ''; S.pinFirst = ''; go('pinReset', {}, true);
+    }).catch(function (e) { S.busy = false; F.err = e.message; F.code = ''; render(); });
+  },
   openYear: function () { S.year = new Date().getFullYear(); go('year'); },
   yearShift: function (ds) { S.year = (S.year || new Date().getFullYear()) + Number(ds.v); render(); },
   printYear: function () { window.print(); },
@@ -1294,6 +1332,7 @@ var INPUT = {
   gfDeadline: function (el) { S.gf.deadline = el.value; },
   depAmt: function (el) { var neg = /^\s*-/.test(el.value); var v = digits(el.value); S.dep.amount = neg ? -v : v; el.value = v ? (neg ? '-' : '') + v.toLocaleString('id-ID') : (neg ? '-' : ''); },
   depNote: function (el) { S.dep.note = el.value; },
+  forgotCode: function (el) { var v = String(el.value).replace(/\D/g, '').slice(0, 6); el.value = v; S.forgot.code = v; var b = document.getElementById('fp-go'); if (b) b.disabled = v.length !== 6; },
   aeIncome: function (el) { var v = digits(el.value); S.ae.income = v; el.value = v ? v.toLocaleString('id-ID') : ''; },
   aePct: function (el) { S.ae[el.dataset.k] = Math.min(100, digits(el.value)); var s = document.getElementById('ae-sum'); if (s) s.textContent = 'Total ' + (S.ae.need + S.ae.want + S.ae.save) + '% (harus 100%)'; },
   aeBudget: function (el) { var v = digits(el.value); S.ae.budgets[el.dataset.name] = v; el.value = v ? v.toLocaleString('id-ID') : ''; }
