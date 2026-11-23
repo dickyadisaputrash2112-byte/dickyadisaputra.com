@@ -1,4 +1,5 @@
-// catat.id v2.0.0 — satu file. Jangan diubah manual; dibuat oleh finance-tracker/tools/build.js
+// catat.id v2.0.0 — © 2026 Dicky Adisaputra. Hak cipta dilindungi. Dilarang menjual ulang atau membagikan tanpa izin.
+// Satu file. Jangan diubah manual; dibuat oleh finance-tracker/tools/build.js
 // ============================================================
 // Config.gs — Konstanta, skema sheet, dan data bawaan catat.id
 // ============================================================
