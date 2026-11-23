@@ -935,7 +935,12 @@ VIEWS.insight = function () {
 function plan() { return (S.boot && S.boot.plan) || { key: 'gold', name: 'Gold', historyDays: 90, goals: false, alloc: false, upgrades: [] }; }
 function isPremium() { return !!plan().goals; }
 function hasAlloc() { return !!plan().alloc; }
-function planPill(name) { return '<span class="pill" style="height:22px;padding:0 9px;font-size:10px;background:var(--orange);color:var(--orange-ink)">' + ic('lock', 'ic-s') + esc(name) + '</span>'; }
+function tierKey(name) { return String(name || '').toLowerCase(); }
+function tierPill(name, opts) {
+  opts = opts || {};
+  return '<span class="pill tier-' + tierKey(name) + '" style="height:' + (opts.h || 24) + 'px;padding:0 ' + (opts.pad || 10) + 'px;font-size:' + (opts.fs || 11) + 'px">' + (opts.lock ? ic('lock', 'ic-s') : '') + esc(name) + '</span>';
+}
+function planPill(name) { return tierPill(name, { lock: true, h: 22, pad: 9, fs: 10 }); }
 var PLAN_ROWS = [
   ['Catat otomatis dari email bank & e-wallet', true, true, true],
   ['Riwayat email saat pasang', '90 hari', '1 tahun', '5 tahun'],
@@ -1088,7 +1093,7 @@ VIEWS.me = function () {
     rowToggle('set-ti', 'arrIn', 'Catat pemasukan', 'Gaji &amp; transfer masuk otomatis', b.settings.trackIncome, 'setTrack') +
     rowLink('openWeekly', 'mail', 'Review mingguan', b.settings.weeklyReviewEnabled ? 'Tiap ' + DAYS[b.settings.weeklyReviewDay] + ', ' + ('0' + b.settings.weeklyReviewHour).slice(-2) + '.00' + (b.settings.weeklyReviewCc ? ' · +' + b.settings.weeklyReviewCc.split(',').length + ' email' : '') : 'Mati') +
     rowToggle('set-pin', 'lock', 'Kunci dengan PIN', b.hasPin ? 'Aktif' : 'Belum diatur', b.hasPin, 'setPin') +
-    rowLink('openLicense', 'shield', 'Versi catat.id: ' + plan().name, plan().key === 'diamond' ? 'Semua fitur aktif' : 'Lihat perbandingan & masukkan kode upgrade') +
+    rowLink('openLicense', 'shield', 'Versi catat.id ' + tierPill(plan().name, { h: 20, pad: 8, fs: 10 }), plan().key === 'diamond' ? 'Semua fitur aktif' : 'Lihat perbandingan & masukkan kode upgrade') +
     rowLink('openYear', 'calendar', 'Rekap tahunan', 'Setahun keuanganmu dalam satu halaman') +
     rowLink('openSheet', 'sheet', 'Buka data di Google Sheets', 'Data tersimpan di Drive milikmu', 'var(--green)') +
     rowLink('syncNowMe', 'sync', 'Sinkronkan sekarang', 'Terakhir ' + ago(b.lastSync)) + '</section>' +
@@ -1164,13 +1169,17 @@ VIEWS.goals = function () {
 };
 function upgradeOffer(p) {
   var perks = { platinum: 'Riwayat email 1 tahun, Rekap tahunan lengkap dari Januari.', diamond: 'Riwayat email 5 tahun, Alokasi bulanan, Goals &amp; tabungan otomatis.' };
-  return (p.upgrades || []).map(function (u, i) {
-    return '<section class="' + (u.to === 'diamond' ? 'navy-card' : 'glass') + ' pad" style="display:flex;flex-direction:column;gap:12px"><div><div class="small" style="color:' + (u.to === 'diamond' ? 'var(--dark-text-3)' : 'var(--ink-2)') + '">Upgrade ke</div>' +
+  var ups = p.upgrades || [];
+  return ups.map(function (u) {
+    var inner = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div style="min-width:0"><div class="small" style="opacity:.8;font-weight:600">Upgrade ke</div>' +
       '<div style="font-size:24px;font-weight:800;letter-spacing:-.03em">' + esc(u.name) + ' · ' + esc(u.price) + '</div>' +
-      '<div class="small" style="margin-top:4px;color:' + (u.to === 'diamond' ? 'var(--dark-text-2)' : 'var(--ink-2)') + '">' + perks[u.to] + ' Data kamu tetap.</div></div>' +
-      (u.link ? '<a class="btn ' + (u.to === 'diamond' ? 'btn-cta' : 'btn-dark') + '" href="' + esc(u.link) + '" target="_blank" rel="noopener">Beli upgrade ke ' + esc(u.name) + ic('arrOut', 'ic-s') + '</a>'
-        : '<div class="small" style="color:' + (u.to === 'diamond' ? 'var(--dark-text-3)' : 'var(--ink-2)') + '">Hubungi penjual untuk membeli kode upgrade.</div>') + '</section>';
-  }).join('') + ((p.upgrades || []).some(function (u) { return u.link; }) ? '<p class="small muted center" style="margin:0">Setelah bayar, kode upgrade dikirim ke emailmu. Masukkan di bawah.</p>' : '');
+      '<div class="small" style="margin-top:4px;opacity:.85">' + perks[u.to] + ' Data kamu tetap.</div></div>' +
+      (u.link ? '<span class="up-go" aria-hidden="true">' + ic('arrOut') + '</span>' : '') + '</div>' +
+      (u.link ? '' : '<div class="small" style="margin-top:10px;opacity:.8">Hubungi penjual untuk membeli kode upgrade.</div>');
+    return u.link
+      ? '<a class="tier-card tier-' + u.to + '" href="' + esc(u.link) + '" target="_blank" rel="noopener" aria-label="Beli upgrade ke ' + esc(u.name) + ' ' + esc(u.price) + '">' + inner + '</a>'
+      : '<section class="tier-card tier-' + u.to + '">' + inner + '</section>';
+  }).join('') + (ups.some(function (u) { return u.link; }) ? '<p class="small muted center" style="margin:0">Ketuk kartu untuk membeli. Setelah bayar, kode upgrade dikirim ke emailmu; masukkan di bawah.</p>' : '');
 }
 
 function planLocked(tab) {
@@ -1190,13 +1199,13 @@ VIEWS.license = function () {
   var table = '<section class="glass" style="padding:8px 12px;border-radius:26px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">' +
     '<thead><tr><th style="text-align:left;padding:10px 4px;font-size:12px;color:var(--ink-2)">Fitur</th>' + names.map(function (n, i) {
       var on = cols[i] === p.key;
-      return '<th style="padding:10px 4px;font-size:12px;text-align:center"><span class="pill ' + (on ? 'navy' : 'white') + '" style="height:24px">' + n + '</span></th>'; }).join('') + '</tr></thead><tbody>' +
+      return '<th style="padding:10px 4px;font-size:12px;text-align:center">' + tierPill(n) + (on ? '<div style="margin-top:4px;font-size:10px;font-weight:800;color:var(--ink-2)">Versimu</div>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>' +
     PLAN_ROWS.map(function (r) {
       return '<tr style="border-top:1px solid rgba(255,255,255,0.55)"><td style="padding:10px 4px;font-weight:600">' + esc(r[0]) + '</td>' + [1, 2, 3].map(function (i) { return '<td style="padding:10px 4px;text-align:center">' + cell(r[i]) + '</td>'; }).join('') + '</tr>';
     }).join('') + '</tbody></table></section>';
   return frame(header('Versi catat.id') +
-    '<section class="navy-card pad"><div class="small" style="color:var(--dark-text-3)">Versi kamu sekarang</div><div style="margin-top:4px;font-size:30px;font-weight:800;letter-spacing:-.04em">' + esc(p.name) + '</div>' +
-    '<div class="small" style="margin-top:6px;color:var(--dark-text-3)">Riwayat email dibaca sejak ' + fmtDate(p.historyFrom) + (p.code ? ' · kode ' + esc(p.code) : '') + '</div></section>' +
+    '<section class="tier-card tier-' + p.key + '"><div class="small" style="opacity:.8;font-weight:600">Versi kamu sekarang</div><div style="margin-top:4px;font-size:30px;font-weight:800;letter-spacing:-.04em">' + esc(p.name) + '</div>' +
+    '<div class="small" style="margin-top:6px;opacity:.8">Riwayat email dibaca sejak ' + fmtDate(p.historyFrom) + (p.code ? ' · kode ' + esc(p.code) : '') + '</div></section>' +
     table +
     (p.key === 'diamond' ? '' : upgradeOffer(p) +
       '<section class="glass pad" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="lic-code">Sudah punya kode upgrade?</label><input id="lic-code" class="inp" data-input="licCode" value="' + esc(L.code) + '" placeholder="mis. PLT-XXXX-XXXX" autocapitalize="characters" style="letter-spacing:.06em"></div>' +

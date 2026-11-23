@@ -219,6 +219,16 @@ a { color: inherit; }
 .float-pill { position: absolute; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(14px); font-size: 12px; font-weight: 700; color: #fff; }
 .orbit-logo { position: absolute; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; border: 2px solid rgba(255,255,255,0.35); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 
+/* ---------- Warna tingkatan versi ---------- */
+.tier-gold { background: linear-gradient(135deg, #FBE7A1 0%, #E9B949 55%, #C8901A 100%); color: #3B2600; }
+.tier-platinum { background: linear-gradient(135deg, #F4F6FA 0%, #C9D0DC 55%, #98A2B3 100%); color: #1E2633; }
+.tier-diamond { background: linear-gradient(135deg, #D8F7FF 0%, #6FD3F5 45%, #3B6FE0 100%); color: #06204A; }
+.pill.tier-gold, .pill.tier-platinum, .pill.tier-diamond { font-weight: 800; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 6px rgba(14,26,66,0.15); }
+.tier-card { display: block; padding: 18px; border-radius: 28px; text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 14px 30px rgba(14,26,66,0.18); transition: transform .12s; }
+a.tier-card:active { transform: scale(.98); }
+a.tier-card:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 18px 36px rgba(14,26,66,0.26); }
+.tier-card .up-go { width: 46px; height: 46px; border-radius: 99px; background: rgba(255,255,255,0.65); display: grid; place-items: center; flex-shrink: 0; }
+
 /* ---------- Logo bank ---------- */
 .blogo { position: relative; flex-shrink: 0; border-radius: 99px; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 0 0 1px rgba(14,26,66,0.08); }
 .blogo img { width: 74%; height: 74%; object-fit: contain; }

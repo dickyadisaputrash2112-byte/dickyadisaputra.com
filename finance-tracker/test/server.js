@@ -1,6 +1,6 @@
 const http = require('http'), fs = require('fs');
 const { create, msg, mkCode } = require('./gas');
-const SRC = require('path').join(__dirname, '..', process.env.DIST ? 'dist' : 'apps-script') + '/';
+const SRC = (process.env.GAS_SRC || require('path').join(__dirname, '..', process.env.DIST ? 'dist' : 'apps-script')) + '/';
 const now = new Date();
 const d = (a, h = 12) => { const x = new Date(now); x.setDate(x.getDate() - a); x.setHours(h, 15, 0, 0); return x; };
 const fmt = x => `${x.getDate()} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][x.getMonth()]} ${x.getFullYear()} ${String(x.getHours()).padStart(2,'0')}:${String(x.getMinutes()).padStart(2,'0')} WIB`;
