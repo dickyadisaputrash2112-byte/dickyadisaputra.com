@@ -94,26 +94,22 @@ function syncWindow_(from, to, run) {
   }
 }
 
-// Riwayat: mundur per 30 hari sampai 1 Januari tahun mulai memakai, supaya Rekap tahunan lengkap.
+// Riwayat: mundur per 30 hari sampai batas versi (Standard 90 hari, Pro 1 tahun, Premium 5 tahun
+// sebelum tanggal pemasangan), supaya Rekap tahunan terisi.
 function backfillState_() {
   var p = PropertiesService.getScriptProperties();
-  var target = p.getProperty(SYNC_CONFIG.backfillTargetProp);
+  var target = historyTarget_();
   var cursor = p.getProperty(SYNC_CONFIG.backfillCursorProp);
   return {
-    target: target ? new Date(target) : null,
+    target: target,
     cursor: cursor ? new Date(cursor) : null,
-    done: !!(target && cursor && new Date(cursor) <= new Date(target))
+    done: !!(cursor && new Date(cursor) <= target)
   };
 }
 
 function backfillStep_(run) {
   var p = PropertiesService.getScriptProperties();
   var st = backfillState_();
-  if (!st.target) {
-    var y = new Date().getFullYear();
-    st.target = new Date(y, 0, 1);
-    p.setProperty(SYNC_CONFIG.backfillTargetProp, st.target.toISOString());
-  }
   if (!st.cursor) st.cursor = new Date(Date.now() - (Number(settings_().initialDaysBack) || 30) * 86400000);
   while (st.cursor > st.target && Date.now() < run.deadline && run.stats.messages < SYNC_CONFIG.maxMessagesPerRun) {
     var from = new Date(Math.max(st.target.getTime(), st.cursor.getTime() - 30 * 86400000));

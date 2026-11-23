@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path');
 const src = path.join(__dirname, '..', 'apps-script'), out = path.join(__dirname, '..', 'dist');
 fs.mkdirSync(out, { recursive: true });
-const order = ['Config', 'Db', 'Parsers', 'Transactions', 'Goals', 'Insights', 'Sync', 'Api', 'Code', 'Migration'];
+const order = ['Config', 'Plans', 'Db', 'Parsers', 'Transactions', 'Goals', 'Insights', 'Sync', 'Api', 'Code', 'Migration'];
 const all = fs.readdirSync(src).filter(f => f.endsWith('.gs')).map(f => f.slice(0, -3));
 const missing = all.filter(n => !order.includes(n));
 if (missing.length) throw new Error('Tambahkan ke urutan build: ' + missing.join(', '));

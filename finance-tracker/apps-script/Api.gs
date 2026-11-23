@@ -34,6 +34,7 @@ var API = {
       spreadsheetUrl: getSpreadsheet_().getUrl(),
       lastSync: lastSyncIso_(),
       history: backfillInfo_(),
+      plan: planInfo_(),
       txCount: txRows_().length
     };
   },
@@ -104,6 +105,7 @@ var API = {
 
   sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack, historyOnly: p && p.historyOnly }); },
   history: function () { return backfillInfo_(); },
+  activate: function (p) { var r = activatePlan_(p.code); return { plan: r, history: backfillInfo_() }; },
   saveWeekly: function (p) {
     var day = Number(p.day), hour = Number(p.hour);
     if (!(day >= 0 && day <= 6)) throw new Error('Hari tidak valid.');
@@ -161,15 +163,16 @@ var API = {
   insight: function (p) { return insightData(p); },
   year: function (p) { return yearData(p); },
 
-  goals: function () { return goals_(); },
+  goals: function () { requireGoals_(); return goals_(); },
   goal: function (p) {
+    requireGoals_();
     var g = goals_().filter(function (x) { return x.id === p.id; })[0];
     if (!g) throw new Error('Goal tidak ditemukan.');
     return g;
   },
-  saveGoal: function (p) { return saveGoal(p); },
-  deleteGoal: function (p) { return deleteGoal(p.id); },
-  addDeposit: function (p) { return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
+  saveGoal: function (p) { requireGoals_(); return saveGoal(p); },
+  deleteGoal: function (p) { requireGoals_(); return deleteGoal(p.id); },
+  addDeposit: function (p) { requireGoals_(); return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
 
   allocation: function (p) { return allocationData(p); },
   saveAllocation: function (p) { return saveAllocation(p); },

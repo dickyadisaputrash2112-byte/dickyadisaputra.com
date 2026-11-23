@@ -138,6 +138,85 @@ var LEGACY_TRIGGER_HANDLERS = [
 
 
 // ============================================================
+// Plans.gs — Versi produk (Standard, Pro, Premium) dan kode aktivasi
+//
+// Standard : riwayat email 90 hari ke belakang, tanpa Goals
+// Pro      : riwayat email 1 tahun ke belakang, tanpa Goals
+// Premium  : riwayat email 5 tahun ke belakang, Goals & tabungan
+// Tanpa kode aktivasi, aplikasi berjalan sebagai Standard.
+// ============================================================
+
+var PLANS = {
+  standard: { key: 'standard', name: 'Standard', rank: 1, historyDays: 90, goals: false },
+  pro: { key: 'pro', name: 'Pro', rank: 2, historyDays: 365, goals: false },
+  premium: { key: 'premium', name: 'Premium', rank: 3, historyDays: 1825, goals: true }
+};
+var PLAN_PREFIX = { STD: 'standard', PRO: 'pro', PRM: 'premium' };
+var LICENSE_SALT = 'lk_ebca9e5136b56b261215e187';
+var CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function plan_() {
+  var k = PropertiesService.getScriptProperties().getProperty('CATAT_PLAN');
+  return PLANS[k] || PLANS.standard;
+}
+
+function installedAt_() {
+  var p = PropertiesService.getScriptProperties();
+  var v = p.getProperty('CATAT_INSTALLED_AT');
+  if (!v) { v = new Date().toISOString(); p.setProperty('CATAT_INSTALLED_AT', v); }
+  return new Date(v);
+}
+
+// Batas paling lama riwayat email yang dibaca, dihitung dari tanggal pemasangan.
+function historyTarget_() {
+  var d = installedAt_();
+  var t = new Date(d.getFullYear(), d.getMonth(), d.getDate() - plan_().historyDays);
+  return t;
+}
+
+function codeChecksum_(prefix, body) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, LICENSE_SALT + '|' + prefix + '|' + body);
+  var out = '';
+  for (var i = 0; i < 4; i++) out += CODE_ALPHABET.charAt((bytes[i] & 0xff) % 32);
+  return out;
+}
+
+function parseCode_(code) {
+  var c = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var m = c.match(/^(STD|PRO|PRM)([A-Z2-9]{4})([A-Z2-9]{4})$/);
+  if (!m || codeChecksum_(m[1], m[2]) !== m[3]) return null;
+  return { plan: PLAN_PREFIX[m[1]], code: m[1] + '-' + m[2] + '-' + m[3] };
+}
+
+function activatePlan_(code) {
+  var r = parseCode_(code);
+  if (!r) throw new Error('Kode aktivasi tidak dikenali. Periksa lagi huruf dan angkanya.');
+  var cur = plan_(), next = PLANS[r.plan];
+  if (next.rank < cur.rank) throw new Error('Versi kamu sekarang sudah ' + cur.name + '.');
+  var p = PropertiesService.getScriptProperties();
+  p.setProperty('CATAT_PLAN', next.key);
+  p.setProperty('CATAT_PLAN_CODE', r.code);
+  p.setProperty('CATAT_PLAN_AT', new Date().toISOString());
+  installedAt_();
+  return planInfo_();
+}
+
+function planInfo_() {
+  var pl = plan_();
+  var p = PropertiesService.getScriptProperties();
+  return {
+    key: pl.key, name: pl.name, historyDays: pl.historyDays, goals: pl.goals,
+    historyFrom: historyTarget_().toISOString(),
+    code: p.getProperty('CATAT_PLAN_CODE') || ''
+  };
+}
+
+function requireGoals_() {
+  if (!plan_().goals) throw new Error('Goals & tabungan tersedia di versi Premium.');
+}
+
+
+// ============================================================
 // Db.gs — Akses spreadsheet dengan cache per eksekusi
 // Semua baca/tulis memakai NAMA kolom, bukan posisi, supaya
 // sheet lama tetap terbaca walau urutan kolomnya berbeda.
@@ -1272,6 +1351,7 @@ function addDeposit(p) {
 }
 
 function autoGoalDeposit_(txn) {
+  if (!plan_().goals) return;
   var to = String(txn.toAccount || '').toLowerCase();
   if (!to) return;
   var goals = rows_(SHEET.GOALS).filter(function (g) {
@@ -1669,7 +1749,7 @@ function allocationData(p) {
   }
 
   var saveAmount = Math.round(bb.base * (Number(s.allocSave) || 0) / 100);
-  var goals = goals_().filter(function (g) { return g.status !== 'done'; });
+  var goals = plan_().goals ? goals_().filter(function (g) { return g.status !== 'done'; }) : [];
   var weights = goals.map(function (g) { return g.monthly || 0; });
   var wsum = weights.reduce(function (a, c) { return a + c; }, 0);
   var savingItems = goals.map(function (g, i) {
@@ -1843,26 +1923,22 @@ function syncWindow_(from, to, run) {
   }
 }
 
-// Riwayat: mundur per 30 hari sampai 1 Januari tahun mulai memakai, supaya Rekap tahunan lengkap.
+// Riwayat: mundur per 30 hari sampai batas versi (Standard 90 hari, Pro 1 tahun, Premium 5 tahun
+// sebelum tanggal pemasangan), supaya Rekap tahunan terisi.
 function backfillState_() {
   var p = PropertiesService.getScriptProperties();
-  var target = p.getProperty(SYNC_CONFIG.backfillTargetProp);
+  var target = historyTarget_();
   var cursor = p.getProperty(SYNC_CONFIG.backfillCursorProp);
   return {
-    target: target ? new Date(target) : null,
+    target: target,
     cursor: cursor ? new Date(cursor) : null,
-    done: !!(target && cursor && new Date(cursor) <= new Date(target))
+    done: !!(cursor && new Date(cursor) <= target)
   };
 }
 
 function backfillStep_(run) {
   var p = PropertiesService.getScriptProperties();
   var st = backfillState_();
-  if (!st.target) {
-    var y = new Date().getFullYear();
-    st.target = new Date(y, 0, 1);
-    p.setProperty(SYNC_CONFIG.backfillTargetProp, st.target.toISOString());
-  }
   if (!st.cursor) st.cursor = new Date(Date.now() - (Number(settings_().initialDaysBack) || 30) * 86400000);
   while (st.cursor > st.target && Date.now() < run.deadline && run.stats.messages < SYNC_CONFIG.maxMessagesPerRun) {
     var from = new Date(Math.max(st.target.getTime(), st.cursor.getTime() - 30 * 86400000));
@@ -1966,6 +2042,7 @@ var API = {
       spreadsheetUrl: getSpreadsheet_().getUrl(),
       lastSync: lastSyncIso_(),
       history: backfillInfo_(),
+      plan: planInfo_(),
       txCount: txRows_().length
     };
   },
@@ -2036,6 +2113,7 @@ var API = {
 
   sync: function (p) { return syncTransactions({ daysBack: p && p.daysBack, historyOnly: p && p.historyOnly }); },
   history: function () { return backfillInfo_(); },
+  activate: function (p) { var r = activatePlan_(p.code); return { plan: r, history: backfillInfo_() }; },
   saveWeekly: function (p) {
     var day = Number(p.day), hour = Number(p.hour);
     if (!(day >= 0 && day <= 6)) throw new Error('Hari tidak valid.');
@@ -2093,15 +2171,16 @@ var API = {
   insight: function (p) { return insightData(p); },
   year: function (p) { return yearData(p); },
 
-  goals: function () { return goals_(); },
+  goals: function () { requireGoals_(); return goals_(); },
   goal: function (p) {
+    requireGoals_();
     var g = goals_().filter(function (x) { return x.id === p.id; })[0];
     if (!g) throw new Error('Goal tidak ditemukan.');
     return g;
   },
-  saveGoal: function (p) { return saveGoal(p); },
-  deleteGoal: function (p) { return deleteGoal(p.id); },
-  addDeposit: function (p) { return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
+  saveGoal: function (p) { requireGoals_(); return saveGoal(p); },
+  deleteGoal: function (p) { requireGoals_(); return deleteGoal(p.id); },
+  addDeposit: function (p) { requireGoals_(); return addDeposit({ goalId: p.goalId, amount: p.amount, note: p.note, source: 'manual' }); },
 
   allocation: function (p) { return allocationData(p); },
   saveAllocation: function (p) { return saveAllocation(p); },
@@ -2313,6 +2392,7 @@ function menuWeekly() {
 
 function setupApp() {
   var notes = [];
+  installedAt_();
   fixProcessedHeader_();
   invalidate_();
   Object.keys(HEADERS).forEach(function (n) { table_(n); });

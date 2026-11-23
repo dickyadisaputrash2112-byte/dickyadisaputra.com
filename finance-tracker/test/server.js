@@ -1,5 +1,5 @@
 const http = require('http'), fs = require('fs');
-const { create, msg } = require('./gas');
+const { create, msg, mkCode } = require('./gas');
 const SRC = require('path').join(__dirname, '..', process.env.DIST ? 'dist' : 'apps-script') + '/';
 const now = new Date();
 const d = (a, h = 12) => { const x = new Date(now); x.setDate(x.getDate() - a); x.setHours(h, 15, 0, 0); return x; };
@@ -31,6 +31,7 @@ if (!process.env.NO_HISTORY) {
   }
 }
 const server = http.createServer((req, res) => {
+  if (req.url === '/__code') { res.end(JSON.stringify({ code: mkCode('PRM', 'DEMO') })); return; }
   if (req.url === '/__mail') { res.end(JSON.stringify(g._sent[g._sent.length - 1] || {})); return; }
   if (req.url === '/api') {
     let body = ''; req.on('data', c => body += c); req.on('end', () => {

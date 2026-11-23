@@ -147,6 +147,7 @@ function menuWeekly() {
 
 function setupApp() {
   var notes = [];
+  installedAt_();
   fixProcessedHeader_();
   invalidate_();
   Object.keys(HEADERS).forEach(function (n) { table_(n); });

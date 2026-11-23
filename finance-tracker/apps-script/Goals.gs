@@ -126,6 +126,7 @@ function addDeposit(p) {
 }
 
 function autoGoalDeposit_(txn) {
+  if (!plan_().goals) return;
   var to = String(txn.toAccount || '').toLowerCase();
   if (!to) return;
   var goals = rows_(SHEET.GOALS).filter(function (g) {

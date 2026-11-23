@@ -384,7 +384,7 @@ function allocationData(p) {
   }
 
   var saveAmount = Math.round(bb.base * (Number(s.allocSave) || 0) / 100);
-  var goals = goals_().filter(function (g) { return g.status !== 'done'; });
+  var goals = plan_().goals ? goals_().filter(function (g) { return g.status !== 'done'; }) : [];
   var weights = goals.map(function (g) { return g.monthly || 0; });
   var wsum = weights.reduce(function (a, c) { return a + c; }, 0);
   var savingItems = goals.map(function (g, i) {

@@ -89,4 +89,9 @@ function create(opts) {
 function msg(id, from, subject, body, date, html) {
   return { getId: () => id, getFrom: () => from, getSubject: () => subject, getDate: () => date, getPlainBody: () => (html ? '' : body), getBody: () => (html ? body : body) };
 }
-module.exports = { create, msg };
+// Kode aktivasi untuk tes (rumus yang sama dengan Plans.gs)
+function mkCode(pre, body) {
+  const SALT = 'lk_ebca9e5136b56b261215e187', A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return pre + '-' + body + '-' + [...crypto.createHash('sha256').update(SALT + '|' + pre + '|' + body).digest().slice(0, 4)].map(b => A[b % 32]).join('');
+}
+module.exports = { create, msg, mkCode };

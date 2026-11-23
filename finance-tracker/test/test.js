@@ -1,4 +1,4 @@
-const { create, msg } = require('./gas');
+const { create, msg, mkCode } = require('./gas');
 const now = new Date();
 const d = (daysAgo, h = 12) => { const x = new Date(now); x.setDate(x.getDate() - daysAgo); x.setHours(h, 15, 0, 0); return x; };
 const fmt = x => `${x.getDate()} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][x.getMonth()]} ${x.getFullYear()} ${String(x.getHours()).padStart(2,'0')}:${String(x.getMinutes()).padStart(2,'0')} WIB`;
@@ -17,6 +17,7 @@ const M = [
 const g = create({ threads: [M] });
 const call = (a, p) => { const r = g.api(a, p); if (!r.ok) throw new Error(a + ': ' + r.error); return r.data; };
 g.onOpen(); console.log('start sheet', g._sheets['Mulai di sini']._data.length); g.setupApp();
+call('activate', { code: mkCode('PRM', 'TEST') });
 let b = call('bootstrap');
 console.log('boot', b.onboarded, b.accounts.length, b.categories.length, b.catalog.length);
 call('saveOnboarding', { nickname: 'Dicky', ownerNames: ['DICKY ADISAPUTRA'], sources: ['Mandiri','Jago','BCA','GoPay','Superbank','BSI','Tunai'], expectedIncome: 8000000, alloc: { need: 50, want: 20, save: 30 }, trackIncome: true, weeklyReviewEnabled: true });
