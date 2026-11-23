@@ -143,8 +143,17 @@ var LEGACY_TRIGGER_HANDLERS = [
 // Standard : riwayat email 90 hari ke belakang, tanpa Goals
 // Pro      : riwayat email 1 tahun ke belakang, tanpa Goals
 // Premium  : riwayat email 5 tahun ke belakang, Goals & tabungan
-// Tanpa kode aktivasi, aplikasi berjalan sebagai Standard.
+// Versi bawaan sebuah template diatur penjual lewat menu catat.id → Masukkan kode versi / upgrade
+// (kodenya disimpan di tab tersembunyi "_lisensi" dan ikut tersalin ke pembeli).
+// Tanpa kode, aplikasi berjalan sebagai Standard.
 // ============================================================
+
+// >>> DIISI PENJUAL: link halaman beli upgrade di Lynk.id / Scalev (kosongkan kalau belum ada)
+var UPGRADE_LINKS = {
+  pro: '',      // mis. 'https://lynk.id/namatoko/upgrade-pro'
+  premium: ''   // mis. 'https://lynk.id/namatoko/upgrade-premium'
+};
+var UPGRADE_PRICE = 'Rp50rb';
 
 var PLANS = {
   standard: { key: 'standard', name: 'Standard', rank: 1, historyDays: 90, goals: false },
@@ -155,9 +164,34 @@ var PLAN_PREFIX = { STD: 'standard', PRO: 'pro', PRM: 'premium' };
 var LICENSE_SALT = 'lk_ebca9e5136b56b261215e187';
 var CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+var LICENSE_SHEET = '_lisensi';
+
 function plan_() {
-  var k = PropertiesService.getScriptProperties().getProperty('CATAT_PLAN');
-  return PLANS[k] || PLANS.standard;
+  var p = PropertiesService.getScriptProperties();
+  var k = p.getProperty('CATAT_PLAN');
+  if (PLANS[k]) return PLANS[k];
+  // Salinan baru: baca kode versi bawaan template dari tab tersembunyi.
+  var r = parseCode_(templateCode_());
+  if (r) {
+    p.setProperty('CATAT_PLAN', r.plan);
+    p.setProperty('CATAT_PLAN_CODE', r.code);
+    return PLANS[r.plan];
+  }
+  return PLANS.standard;
+}
+
+function templateCode_() {
+  try {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LICENSE_SHEET);
+    return sh ? String(sh.getRange(1, 1).getValue() || '') : '';
+  } catch (e) { return ''; }
+}
+
+function writeLicenseSheet_(code) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(LICENSE_SHEET) || ss.insertSheet(LICENSE_SHEET);
+  sh.getRange(1, 1, 1, 2).setValues([[code, 'Jangan diubah. Kode versi catat.id.']]);
+  try { sh.hideSheet(); } catch (e) {}
 }
 
 function installedAt_() {
@@ -197,6 +231,7 @@ function activatePlan_(code) {
   p.setProperty('CATAT_PLAN', next.key);
   p.setProperty('CATAT_PLAN_CODE', r.code);
   p.setProperty('CATAT_PLAN_AT', new Date().toISOString());
+  writeLicenseSheet_(r.code);
   installedAt_();
   return planInfo_();
 }
@@ -207,7 +242,8 @@ function planInfo_() {
   return {
     key: pl.key, name: pl.name, historyDays: pl.historyDays, goals: pl.goals,
     historyFrom: historyTarget_().toISOString(),
-    code: p.getProperty('CATAT_PLAN_CODE') || ''
+    code: p.getProperty('CATAT_PLAN_CODE') || '',
+    upgrade: { pro: UPGRADE_LINKS.pro || '', premium: UPGRADE_LINKS.premium || '', price: UPGRADE_PRICE }
   };
 }
 
@@ -2273,6 +2309,7 @@ function onOpen() {
     .addItem('Kirim review mingguan sekarang', 'menuWeekly')
     .addItem('Reset PIN aplikasi', 'menuResetPin')
     .addItem('Setup ulang', 'menuSetup')
+    .addItem('Masukkan kode versi / upgrade', 'menuPlanCode')
     .addToUi();
   try { ensureStartSheet_(SpreadsheetApp.getActiveSpreadsheet()); } catch (e) {}
 }
@@ -2302,6 +2339,17 @@ function ensureStartSheet_(ss) {
   sh.getRange(3, 1).setFontWeight('bold');
   sh.setColumnWidth(1, 900);
   sh.setHiddenGridlines(true);
+}
+
+// Penjual memakai ini di template master Pro/Premium; pembeli juga bisa memakainya untuk upgrade.
+function menuPlanCode() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PRO-XXXX-XXXX atau PRM-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  try {
+    var info = activatePlan_(r.getResponseText());
+    ui.alert('Versi ' + info.name + ' aktif', 'Salinan baru dari spreadsheet ini juga otomatis versi ' + info.name + '.', ui.ButtonSet.OK);
+  } catch (e) { ui.alert(e.message); }
 }
 
 function menuResetPin() {

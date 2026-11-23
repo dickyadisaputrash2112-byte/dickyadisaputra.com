@@ -15,3 +15,13 @@ console.log('downgrade', JSON.stringify(call('activate', { code: mk('STD', 'AB2C
 console.log('premium', JSON.stringify(call('activate', { code: mk('PRM', 'Z9X8') }).data.plan));
 console.log('goals ok', call('goals', {}).ok, call('saveGoal', { name: 'Dana', target: 1000000 }).ok);
 console.log('history target premium', g.historyTarget_().toISOString().slice(0, 10));
+
+// Template master Pro: penjual masukkan kode di master, salinan pembeli langsung Pro
+const master = create({});
+master.activatePlan_(mk('PRO', 'MAST'));
+const copy = create({});
+copy._sheets['_lisensi'] = master._sheets['_lisensi'];
+console.log('copy plan (fresh props):', copy.plan_().name, '| master sheet:', master._sheets['_lisensi']._data[0][0]);
+copy.setupApp();
+console.log('copy upgrade to premium:', JSON.stringify(copy.api('activate', { code: mk('PRM', 'UPGA') }).data.plan.name));
+console.log('upgrade links', JSON.stringify(copy.api('bootstrap').data.plan.upgrade));

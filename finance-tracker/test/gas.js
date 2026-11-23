@@ -9,7 +9,7 @@ function makeSheet(name) {
     getName: () => name,
     getLastRow: () => data.length,
     getLastColumn: () => data.reduce((m, r) => Math.max(m, r.length), 0),
-    setFrozenRows() {}, setColumnWidth() {}, setHiddenGridlines() {},
+    setFrozenRows() {}, setColumnWidth() {}, setHiddenGridlines() {}, hideSheet() {},
     appendRow(row) { data.push(row.slice()); return sh; },
     deleteRow(r) { data.splice(r - 1, 1); },
     deleteRows(r, n) { data.splice(r - 1, n); },
@@ -27,6 +27,7 @@ function makeSheet(name) {
           return rng;
         },
         setValue(x) { return rng.setValues([[x]]); },
+        getValue() { return rng.getValues()[0][0]; },
         clearContent() { for (let i = 0; i < nr; i++) { const row = data[r - 1 + i]; if (row) for (let j = 0; j < nc; j++) row[c - 1 + j] = ''; } return rng; },
         setFontWeight() { return rng; }, setFontSize() { return rng; }, setNumberFormat() { return rng; }
       };
@@ -79,10 +80,12 @@ function create(opts) {
       XFrameOptionsMode: { ALLOWALL: 1 }
     },
     Logger: { log() {} },
+    ContentService: { createTextOutput: t => ({ getContent: () => t, setMimeType() { return this; } }), MimeType: { JSON: 'json', TEXT: 'text' } },
     _sheets: sheets, _sent: sent, _triggers: triggers, _userProps: userProps, _scriptProps: scriptProps
   };
   vm.createContext(ctx);
-  fs.readdirSync(SRC).filter(f => f.endsWith('.gs')).sort().forEach(f => vm.runInContext(fs.readFileSync(path.join(SRC, f), 'utf8'), ctx, { filename: f }));
+  const dir = opts.src || SRC;
+  fs.readdirSync(dir).filter(f => f.endsWith('.gs')).sort().forEach(f => vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), ctx, { filename: f }));
   return ctx;
 }
 

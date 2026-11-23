@@ -1162,6 +1162,16 @@ VIEWS.goals = function () {
   return frame(hdr + '<div class="cols"><div class="col">' + (g.length ? hero : '') + info + '</div><div class="col"><div class="sec-head"><h2>Goal aktif</h2><span class="small" style="font-weight:700">' + active.length + ' goal</span></div>' +
     (cards || '<div class="glass empty"><b>Belum ada goal</b>Buat goal pertama: dana darurat, liburan, atau menikah.<br><br><button class="btn btn-dark" data-act="goalNew">Buat goal</button></div>') + doneHtml + '</div></div>', { nav: 'plan' });
 };
+function upgradeOffer(p) {
+  var next = p.key === 'standard' ? 'pro' : 'premium';
+  var link = p.upgrade && p.upgrade[next];
+  var perks = next === 'pro' ? 'Riwayat email 1 tahun, Rekap tahunan lengkap dari Januari.' : 'Goals &amp; tabungan otomatis, riwayat email 5 tahun.';
+  return '<section class="navy-card pad" style="display:flex;flex-direction:column;gap:12px"><div><div class="small" style="color:var(--dark-text-3)">Upgrade ke</div><div style="font-size:24px;font-weight:800;letter-spacing:-.03em">' + (next === 'pro' ? 'Pro' : 'Premium') + ' · ' + esc((p.upgrade && p.upgrade.price) || 'Rp50rb') + '</div>' +
+    '<div class="small" style="margin-top:4px;color:var(--dark-text-2)">' + perks + ' Data kamu tetap.</div></div>' +
+    (link ? '<a class="btn btn-cta" href="' + esc(link) + '" target="_blank" rel="noopener">Beli upgrade' + ic('arrOut', 'ic-s') + '</a><div class="small" style="color:var(--dark-text-3)">Setelah bayar, kode upgrade dikirim otomatis ke emailmu. Masukkan di bawah.</div>'
+      : '<div class="small" style="color:var(--dark-text-3)">Hubungi penjual untuk membeli kode upgrade.</div>') + '</section>';
+}
+
 function goalsLocked() {
   return '<section class="navy-card pad" style="padding:22px"><span style="width:52px;height:52px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('target', 'ic-l') + '</span>' +
     '<div style="margin-top:14px;font-size:22px;font-weight:800;letter-spacing:-.03em">Goals &amp; tabungan ada di Premium</div>' +
@@ -1184,8 +1194,8 @@ VIEWS.license = function () {
     '<section class="navy-card pad"><div class="small" style="color:var(--dark-text-3)">Versi kamu sekarang</div><div style="margin-top:4px;font-size:30px;font-weight:800;letter-spacing:-.04em">' + esc(p.name) + '</div>' +
     '<div class="small" style="margin-top:6px;color:var(--dark-text-3)">Riwayat email dibaca sejak ' + fmtDate(p.historyFrom) + (p.code ? ' · kode ' + esc(p.code) : '') + '</div></section>' +
     table +
-    (p.key === 'premium' ? '' :
-      '<section class="glass pad" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="lic-code">Kode upgrade</label><input id="lic-code" class="inp" data-input="licCode" value="' + esc(L.code) + '" placeholder="PRO-XXXX-XXXX atau PRM-XXXX-XXXX" autocapitalize="characters" style="letter-spacing:.06em"></div>' +
+    (p.key === 'premium' ? '' : upgradeOffer(p) +
+      '<section class="glass pad" style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="lic-code">Sudah punya kode upgrade?</label><input id="lic-code" class="inp" data-input="licCode" value="' + esc(L.code) + '" placeholder="PRO-XXXX-XXXX atau PRM-XXXX-XXXX" autocapitalize="characters" style="letter-spacing:.06em"></div>' +
       (L.err ? '<div class="err">' + esc(L.err) + '</div>' : '') +
       '<button class="btn btn-dark" data-act="licActivate"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'Memeriksa…' : 'Aktifkan') + '</button>' +
       '<span class="small muted" style="text-align:center">Data kamu tetap. Setelah upgrade, riwayat email yang lebih lama diambil otomatis.</span></section>'));

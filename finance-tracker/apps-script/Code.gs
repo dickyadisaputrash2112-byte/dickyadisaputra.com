@@ -28,6 +28,7 @@ function onOpen() {
     .addItem('Kirim review mingguan sekarang', 'menuWeekly')
     .addItem('Reset PIN aplikasi', 'menuResetPin')
     .addItem('Setup ulang', 'menuSetup')
+    .addItem('Masukkan kode versi / upgrade', 'menuPlanCode')
     .addToUi();
   try { ensureStartSheet_(SpreadsheetApp.getActiveSpreadsheet()); } catch (e) {}
 }
@@ -57,6 +58,17 @@ function ensureStartSheet_(ss) {
   sh.getRange(3, 1).setFontWeight('bold');
   sh.setColumnWidth(1, 900);
   sh.setHiddenGridlines(true);
+}
+
+// Penjual memakai ini di template master Pro/Premium; pembeli juga bisa memakainya untuk upgrade.
+function menuPlanCode() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.prompt('Kode versi catat.id', 'Masukkan kode, mis. PRO-XXXX-XXXX atau PRM-XXXX-XXXX:', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  try {
+    var info = activatePlan_(r.getResponseText());
+    ui.alert('Versi ' + info.name + ' aktif', 'Salinan baru dari spreadsheet ini juga otomatis versi ' + info.name + '.', ui.ButtonSet.OK);
+  } catch (e) { ui.alert(e.message); }
 }
 
 function menuResetPin() {
