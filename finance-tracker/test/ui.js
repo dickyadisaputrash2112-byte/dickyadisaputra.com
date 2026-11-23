@@ -3,8 +3,12 @@ const { chromium } = require('playwright');
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Jakarta' });
   const errs = [];
+  // Di sandbox tes internet ditutup: logo bank diganti gambar contoh supaya tata letaknya bisa dicek.
+  // Sumber lain (font Google) diabaikan.
+  await p.route('**/s2/favicons**', r => r.fulfill({ path: __dirname + '/fake-logo.png', contentType: 'image/png' }));
+  await p.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
   p.on('pageerror', e => errs.push('pageerror: ' + e.message));
-  p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+  p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push('console: ' + m.text()); });
   const shot = async n => { await p.waitForTimeout(350); await p.screenshot({ path: __dirname + `/shots/${n}.png`, fullPage: true }); };
   const click = async sel => { await p.click(sel); await p.waitForTimeout(250); };
   await p.goto('http://localhost:8765/'); await p.waitForTimeout(800);

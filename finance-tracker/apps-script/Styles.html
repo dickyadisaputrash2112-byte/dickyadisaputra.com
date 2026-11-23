@@ -219,6 +219,14 @@ a { color: inherit; }
 .float-pill { position: absolute; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(14px); font-size: 12px; font-weight: 700; color: #fff; }
 .orbit-logo { position: absolute; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; border: 2px solid rgba(255,255,255,0.35); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 
+/* ---------- Logo bank ---------- */
+.blogo { position: relative; flex-shrink: 0; border-radius: 99px; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 0 0 1px rgba(14,26,66,0.08); }
+.blogo img { width: 74%; height: 74%; object-fit: contain; }
+.blogo b { display: none; color: #fff; font-weight: 800; letter-spacing: .02em; }
+.blogo.nofav { background: var(--c); }
+.blogo.nofav img { display: none; }
+.blogo.nofav b { display: block; }
+
 /* ---------- Lain-lain ---------- */
 .toast-wrap { position: fixed; left: 50%; transform: translateX(-50%); top: calc(16px + env(safe-area-inset-top)); width: min(420px, calc(100% - 32px)); z-index: 200; pointer-events: none; }
 .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 18px; background: var(--navy); color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 16px 40px rgba(0,0,0,0.3); pointer-events: auto; animation: tin .25s ease both; }

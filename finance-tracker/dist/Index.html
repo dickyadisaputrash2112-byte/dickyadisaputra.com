@@ -228,6 +228,14 @@ a { color: inherit; }
 .float-pill { position: absolute; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(14px); font-size: 12px; font-weight: 700; color: #fff; }
 .orbit-logo { position: absolute; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; border: 2px solid rgba(255,255,255,0.35); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 
+/* ---------- Logo bank ---------- */
+.blogo { position: relative; flex-shrink: 0; border-radius: 99px; background: #fff; display: grid; place-items: center; overflow: hidden; box-shadow: 0 0 0 1px rgba(14,26,66,0.08); }
+.blogo img { width: 74%; height: 74%; object-fit: contain; }
+.blogo b { display: none; color: #fff; font-weight: 800; letter-spacing: .02em; }
+.blogo.nofav { background: var(--c); }
+.blogo.nofav img { display: none; }
+.blogo.nofav b { display: block; }
+
 /* ---------- Lain-lain ---------- */
 .toast-wrap { position: fixed; left: 50%; transform: translateX(-50%); top: calc(16px + env(safe-area-inset-top)); width: min(420px, calc(100% - 32px)); z-index: 200; pointer-events: none; }
 .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 18px; background: var(--navy); color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 16px 40px rgba(0,0,0,0.3); pointer-events: auto; animation: tin .25s ease both; }
@@ -421,6 +429,9 @@ function catInfo(name) {
   var c = (S.boot.categories || []).filter(function (x) { return x.name === name; })[0];
   return c || { name: name, key: '', color: '#3A4E78', group: 'Want' };
 }
+function catalogInfo(name) {
+  return (S.boot.catalog || []).filter(function (x) { return x.name === name; })[0] || { name: name, abbr: name.slice(0, 2).toUpperCase(), color: '#3A4E78' };
+}
 function acctInfo(name) {
   var a = (S.boot.accounts || []).filter(function (x) { return x.name === name; })[0]
     || (S.boot.catalog || []).filter(function (x) { return x.name.toLowerCase() === String(name).toLowerCase(); })[0];
@@ -524,11 +535,22 @@ function navBar(active) {
 }
 function loading(text) { return '<div class="loading"><span class="spin"></span>' + esc(text || 'Memuat…') + '</div>'; }
 function errBox(d) { return '<div class="err">' + esc(d.__error) + '</div>'; }
-function logo(name, size) {
-  var a = acctInfo(name);
-  size = size || 40;
-  return '<span class="ticon" style="width:' + size + 'px;height:' + size + 'px;background:' + esc(a.color) + ';color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border-radius:99px;flex-shrink:0">' + esc(a.abbr) + '</span>';
+// Logo asli bank/e-wallet diambil dari ikon situs resminya (lewat layanan favicon Google)
+// saat aplikasi dibuka. Kalau gagal dimuat, otomatis kembali ke lingkaran berwarna + singkatan.
+var LOGO_SITE = {
+  mandiri: 'bankmandiri.co.id', jago: 'jago.com', bsi: 'bankbsi.co.id', superbank: 'superbank.id',
+  bca: 'bca.co.id', bri: 'bri.co.id', bni: 'bni.co.id', seabank: 'seabank.co.id', blu: 'blubybcadigital.id',
+  'cimb niaga': 'cimbniaga.co.id', permata: 'permatabank.com', gopay: 'gopay.co.id', ovo: 'ovo.id',
+  dana: 'dana.id', shopeepay: 'shopeepay.co.id'
+};
+function badge(a, size, style) {
+  var site = LOGO_SITE[String(a.name || '').toLowerCase()];
+  var fs = Math.max(9, Math.round(size * 0.28));
+  return '<span class="blogo' + (site ? '' : ' nofav') + '" style="width:' + size + 'px;height:' + size + 'px;--c:' + esc(a.color) + ';' + (style || '') + '">' +
+    (site ? '<img src="https://www.google.com/s2/favicons?domain=' + site + '&sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'nofav\')">' : '') +
+    '<b style="font-size:' + fs + 'px">' + esc(a.abbr) + '</b></span>';
 }
+function logo(name, size) { return badge(acctInfo(name), size || 40); }
 function ring(pct, color, size, inner, icon, iconColor) {
   var deg = Math.round(Math.max(0, Math.min(100, pct)) * 3.6);
   return '<span class="ring" style="width:' + size + 'px;height:' + size + 'px;background:conic-gradient(' + color + ' 0 ' + deg + 'deg, rgba(255,255,255,0.65) 0)"><span style="width:' + inner + 'px;height:' + inner + 'px;color:' + (iconColor || color) + '">' + ic(icon) + '</span></span>';
@@ -616,20 +638,20 @@ function illus1() {
     '<div style="margin-top:14px;font-size:28px;font-weight:800;letter-spacing:-.05em">Rp52.000</div><div style="font-size:13px;font-weight:700;color:#3A4A70">Mie Gacoan · Makan</div>' +
     '<div style="margin:12px 0;border-top:1.5px dashed #C8D3EA"></div><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#3A4A70"><span>Dari</span><b style="color:var(--ink)">Email Bank Jago</b></div></div>' +
     '<div class="envelope"><svg width="252" height="132" viewBox="0 0 252 132" style="position:absolute;inset:0"><path d="M0 4 L126 78 L252 4" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/></svg></div>' +
-    '<div class="float-pill" style="left:14px;top:150px"><span style="width:22px;height:22px;border-radius:99px;background:#C9741A;display:grid;place-items:center;font-size:9px;font-weight:800">JG</span>Email masuk</div>' +
+    '<div class="float-pill" style="left:14px;top:150px">' + badge(catalogInfo('Jago'), 22) + 'Email masuk</div>' +
     '<div class="float-pill" style="right:14px;top:70px"><span style="width:22px;height:22px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic('check', 'ic-s') + '</span>Kategori terisi</div>';
 }
 function illus2() {
-  var logos = [['MD', '#1C3F8C', 'left:46px;top:30px', 48], ['JG', '#C9741A', 'right:52px;top:14px', 44], ['BC', '#1E5AA8', 'right:22px;top:140px', 50], ['GP', '#0F86A0', 'left:22px;top:164px', 42], ['OV', '#5A35B5', 'left:74px;bottom:10px', 40], ['BS', '#13806E', 'right:78px;bottom:4px', 44]];
+  var logos = [['Mandiri', 'left:46px;top:30px', 48], ['Jago', 'right:52px;top:14px', 44], ['BCA', 'right:22px;top:140px', 50], ['GoPay', 'left:22px;top:164px', 42], ['OVO', 'left:74px;bottom:10px', 40], ['BSI', 'right:78px;bottom:4px', 44]];
   return '<span class="glow" style="top:50%"></span>' +
     '<span style="position:absolute;left:50%;top:50%;width:290px;height:290px;margin:-145px 0 0 -145px;border-radius:50%;border:1.5px dashed rgba(199,224,255,0.28)"></span>' +
     '<div style="position:absolute;left:50%;top:50%;width:214px;margin:-92px 0 0 -107px;padding:14px;border-radius:24px;background:linear-gradient(165deg,#fff,#E8EFFC);color:var(--ink);box-shadow:0 24px 44px rgba(0,0,0,0.4)">' +
     '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">Hari ini</b><span class="pill navy" style="height:20px;font-size:9px">3 sumber</span></div>' +
-    [['MD', '#1C3F8C', 'Gaji masuk', '+7,5 jt', '#17643F'], ['GP', '#0F86A0', 'Kopi Kenangan', '−27rb', ''], ['BC', '#1E5AA8', 'QRIS Mie Gacoan', 'Cek', 'pill']].map(function (r) {
-      return '<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:28px;height:28px;border-radius:99px;background:' + r[1] + ';color:#fff;display:grid;place-items:center;font-size:9px;font-weight:800">' + r[0] + '</span><span style="flex:1;font-size:11px;font-weight:700">' + r[2] + '</span>' +
+    [['Mandiri', '', 'Gaji masuk', '+7,5 jt', '#17643F'], ['GoPay', '', 'Kopi Kenangan', '−27rb', ''], ['BCA', '', 'QRIS Mie Gacoan', 'Cek', 'pill']].map(function (r) {
+      return '<div style="display:flex;align-items:center;gap:8px;margin-top:8px">' + badge(catalogInfo(r[0]), 28) + '<span style="flex:1;font-size:11px;font-weight:700">' + r[2] + '</span>' +
         (r[4] === 'pill' ? '<span class="pill orange" style="height:18px;font-size:8px;padding:0 6px">Cek</span>' : '<b style="font-size:11px;color:' + (r[4] || 'inherit') + '">' + r[3] + '</b>') + '</div>';
     }).join('') + '</div>' +
-    logos.map(function (l) { return '<span class="orbit-logo" style="' + l[2] + ';width:' + l[3] + 'px;height:' + l[3] + 'px;background:' + l[1] + '">' + l[0] + '</span>'; }).join('');
+    logos.map(function (l) { return badge(catalogInfo(l[0]), l[2], 'position:absolute;' + l[1] + ';border:2px solid rgba(255,255,255,0.5);box-shadow:0 10px 20px rgba(0,0,0,0.3)'); }).join('');
 }
 function illus3() {
   var rows = [['Tanggal', 'Keterangan', 'Nominal', 1], ['14 Nov', 'Warteg Bahari', '−24.000'], ['14 Nov', 'Kopi Kenangan', '−27.500'], ['1 Nov', 'Gaji', '+7.500.000']];
@@ -706,7 +728,7 @@ function sourcesView(scope) {
     var on = sel.indexOf(s.name) > -1;
     var md = s.mode === 'full' ? 'Otomatis' : s.mode === 'smart' ? 'Mode pintar' : 'Manual';
     return '<button class="src' + (on ? ' on' : '') + '" data-act="srcToggle" data-scope="' + scope + '" data-v="' + esc(s.name) + '" aria-pressed="' + on + '">' +
-      '<span class="logo" style="background:' + s.color + '">' + esc(s.abbr) + '</span><span class="nm">' + esc(s.name) + '<span class="md">' + md + '</span></span><span class="ck">' + ic('check', 'ic-s') + '</span></button>';
+      badge(s, 36) + '<span class="nm">' + esc(s.name) + '<span class="md">' + md + '</span></span><span class="ck">' + ic('check', 'ic-s') + '</span></button>';
   }).join('');
   var foot = scope === 'ob'
     ? '<button class="btn btn-cta" data-act="obNext" style="margin-top:18px"' + (sel.length ? '' : ' disabled') + '>Lanjut · ' + sel.length + ' dipilih' + ic('right') + '</button>'
@@ -770,7 +792,7 @@ VIEWS.sync = function () {
     var n = (r.byAccount && r.byAccount[a.name]) || 0;
     var pill = !done ? '<span class="pill" style="background:rgba(255,255,255,0.1);color:var(--dark-text-2)">Membaca…</span>'
       : '<span class="pill" style="background:var(--ice);color:var(--navy)">' + n + ' baru</span>';
-    return '<div class="d-card" style="display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border-radius:99px"><span class="src"><span class="logo" style="background:' + a.color + '">' + esc(a.abbr) + '</span></span><div style="flex:1"><b style="font-size:14px">' + esc(a.name) + '</b><div style="font-size:12px;color:var(--dark-text-3)">' + (a.mode === 'full' ? 'Otomatis penuh' : 'Mode pintar') + '</div></div>' + pill + '</div>';
+    return '<div class="d-card" style="display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border-radius:99px">' + badge(a, 40) + '<div style="flex:1"><b style="font-size:14px">' + esc(a.name) + '</b><div style="font-size:12px;color:var(--dark-text-3)">' + (a.mode === 'full' ? 'Otomatis penuh' : 'Mode pintar') + '</div></div>' + pill + '</div>';
   }).join('');
   return darkFrame(
     '<div style="align-self:center;margin-top:20px">' + (done ? '<span style="width:120px;height:120px;border-radius:99px;background:var(--ice);color:var(--navy);display:grid;place-items:center">' + ic(st.status === 'error' ? 'x' : 'check', 'ic-l') + '</span>' : '<span class="spin" style="width:120px;height:120px;border-width:6px;display:block"></span>') + '</div>' +
