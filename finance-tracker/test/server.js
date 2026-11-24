@@ -31,6 +31,12 @@ if (!process.env.NO_HISTORY) {
   }
 }
 const server = http.createServer((req, res) => {
+  if (process.env.WALK_DIR && /^\/walk\//.test(req.url)) {
+    const p = require('path').join(process.env.WALK_DIR, req.url.slice(6).split('?')[0]);
+    const type = p.endsWith('.html') ? 'text/html' : p.endsWith('.woff2') ? 'font/woff2' : 'application/octet-stream';
+    try { res.setHeader('content-type', type); res.end(fs.readFileSync(p)); } catch (e) { res.statusCode = 404; res.end(); }
+    return;
+  }
   if (req.url === '/__code') { res.end(JSON.stringify({ code: mkCode('DMD', 'DEMA'), dup: mkCode('DUP', 'DEMA') })); return; }
   if (req.url === '/__mail') { res.end(JSON.stringify(g._sent[g._sent.length - 1] || {})); return; }
   if (req.url === '/api') {
