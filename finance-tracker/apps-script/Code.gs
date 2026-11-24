@@ -3,6 +3,7 @@
 // ============================================================
 
 function doGet() {
+  markWebAppLive_();
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
     .setTitle(APP.name)
@@ -47,8 +48,10 @@ function ensureStartSheet_(ss) {
     ['1. Klik menu catat.id → ▶ Mulai / buka aplikasi (di baris menu atas, sebelah Bantuan).'],
     ['   Pertama kali, Google meminta izin: Lanjutkan → pilih akunmu → Lanjutan → Buka catat.id (tidak aman) → Pilih semua → Lanjutkan.'],
     ['   Setelah izin diberikan, klik ▶ Mulai / buka aplikasi sekali lagi.'],
-    ['2. Muncul link aplikasimu. Kirim ke HP, buka dengan akun Google yang sama, lalu Tambahkan ke Layar Utama.'],
-    ['3. Isi nama di rekening, pilih bank, dan atur PIN. Selesai — transaksi tercatat otomatis tiap 15 menit.'],
+    ['2. Muncul kotak "Aplikasi belum diterbitkan". Klik Buka editor → Terapkan → Penerapan baru → ikon gerigi → Aplikasi web.'],
+    ['   Jalankan sebagai: Saya. Yang memiliki akses: Hanya saya. Klik Terapkan, salin link Aplikasi web (/exec), lalu buka sekali.'],
+    ['3. Kirim link itu ke HP, buka dengan akun Google yang sama, lalu Tambahkan ke Layar Utama. (Link bisa dilihat lagi lewat ▶ Mulai.)'],
+    ['4. Isi nama di rekening, pilih bank, dan atur PIN. Selesai — transaksi tercatat otomatis tiap 15 menit.'],
     [''],
     ['Data kamu tersimpan di spreadsheet ini, di Google Drive kamu sendiri. Tidak dikirim ke penjual.'],
     ['Butuh bantuan? Hubungi nomor WhatsApp di email pembelianmu.']
@@ -100,8 +103,20 @@ function menuSetup() {
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
-// Link aplikasi hanya dianggap ada kalau aplikasi web benar-benar sudah diterbitkan.
-// (Google bisa memberi alamat /exec walau belum ada penerapan, dan link itu gagal dibuka.)
+// Aplikasi web dianggap sudah diterbitkan setelah benar-benar pernah dibuka (doGet berjalan).
+// Google tetap memberi alamat /exec di salinan baru walau belum ada penerapan, dan link itu gagal dibuka,
+// jadi alamat saja tidak cukup. Penandanya memakai ID skrip, sehingga salinan baru selalu mulai dari "belum".
+var WEBAPP_LIVE_KEY = 'CATAT_WEBAPP_LIVE';
+function markWebAppLive_() {
+  try {
+    var p = PropertiesService.getScriptProperties(), id = ScriptApp.getScriptId();
+    if (p.getProperty(WEBAPP_LIVE_KEY) !== id) p.setProperty(WEBAPP_LIVE_KEY, id);
+  } catch (e) {}
+}
+function webAppLive_() {
+  try { return PropertiesService.getScriptProperties().getProperty(WEBAPP_LIVE_KEY) === ScriptApp.getScriptId(); } catch (e) { return false; }
+}
+
 function appUrl_() {
   try {
     var svc = ScriptApp.getService();
@@ -111,12 +126,12 @@ function appUrl_() {
 }
 
 function menuOpenApp() {
-  var url = appUrl_();
+  var url = appUrl_(), live = !!url && webAppLive_();
   var css = '<style>body{font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#0B1835;margin:0}ol{padding-left:20px;margin:8px 0}li{margin:4px 0}' +
     'a.btn{display:inline-block;margin-top:10px;padding:10px 16px;border-radius:999px;background:#0E1F4D;color:#fff;text-decoration:none;font-weight:bold}' +
     'code{background:#EEF2FA;padding:1px 5px;border-radius:4px;word-break:break-all}</style>';
   var html, h;
-  if (url) {
+  if (live) {
     html = css + '<p>Link aplikasi kamu:</p><p><code>' + url + '</code></p>' +
       '<a class="btn" href="' + url + '" target="_blank">Buka aplikasi</a>' +
       '<p style="font-size:12px;color:#555">Kirim link ini ke HP, buka di Chrome atau Safari dengan akun Google yang sama, lalu Tambahkan ke Layar Utama.</p>' +
@@ -130,10 +145,11 @@ function menuOpenApp() {
       '<li>Klik ikon gerigi di samping "Pilih jenis" → <b>Aplikasi web</b>.</li>' +
       '<li>Jalankan sebagai: <b>Saya</b>. Yang memiliki akses: <b>Hanya saya</b>.</li>' +
       '<li>Klik <b>Terapkan</b>. Kalau diminta izin, setujui seperti saat Setup.</li>' +
-      '<li>Salin link <b>Aplikasi web</b> (berakhiran /exec) dan buka di HP.</li></ol>' +
+      '<li>Salin link <b>Aplikasi web</b> (berakhiran /exec), buka sekali di browser ini, lalu kirim ke HP.</li></ol>' +
       '<a class="btn" href="' + editor + '" target="_blank">Buka editor</a>' +
-      '<p style="font-size:12px;color:#555">Setelah itu, menu ini akan langsung menampilkan link aplikasimu.</p>';
-    h = 400;
+      (url ? '<p style="font-size:12px;color:#555;margin-top:12px">Sudah diterbitkan? <a href="' + url + '" target="_blank">Buka aplikasi</a>.</p>' : '') +
+      '<p style="font-size:12px;color:#555">Setelah aplikasi dibuka sekali, menu ini langsung menampilkan link aplikasimu.</p>';
+    h = 430;
   }
   SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(460).setHeight(h), 'Aplikasi catat.id');
 }

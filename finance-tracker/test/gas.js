@@ -55,7 +55,7 @@ function create(opts) {
     console, Math, Date, JSON, RegExp, String, Number, Array, Object, Error, isFinite, isNaN, parseFloat, parseInt,
     SpreadsheetApp: {
       getActiveSpreadsheet: () => ss, openById: () => ss,
-      getUi: () => ({ alert() {}, createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi() {} }; return m; }, ButtonSet: { OK: 1, YES_NO: 2 }, Button: { YES: 'YES' }, showModalDialog() {} })
+      getUi: () => ({ alert() {}, createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi() {} }; return m; }, ButtonSet: { OK: 1, YES_NO: 2 }, Button: { YES: 'YES' }, showModalDialog(o) { ctx._dialog = o._h; } })
     },
     PropertiesService: { getScriptProperties: () => scriptProps, getUserProperties: () => userProps },
     LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }) },
@@ -70,13 +70,13 @@ function create(opts) {
     MailApp: { sendEmail: o => sent.push(o), getRemainingDailyQuota: () => 100 },
     ScriptApp: {
       WeekDay: { SUNDAY: 'SUNDAY', MONDAY: 'MONDAY', TUESDAY: 'TUESDAY', WEDNESDAY: 'WEDNESDAY', THURSDAY: 'THURSDAY', FRIDAY: 'FRIDAY', SATURDAY: 'SATURDAY' }, getProjectTriggers: () => triggers.slice(), deleteTrigger: t => triggers.splice(triggers.indexOf(t), 1),
-      getScriptId: () => 'SCRIPT', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/X/exec', isEnabled: () => !opts.notDeployed }),
+      getScriptId: () => opts.scriptId || 'SCRIPT', getService: () => ({ getUrl: () => 'https://script.google.com/macros/s/X/exec', isEnabled: () => !opts.notDeployed }),
       newTrigger: h => { const t = tb(); t._h = h; return t; }
     },
     HtmlService: {
       createTemplateFromFile: n => ({ evaluate: () => ({ setTitle() { return this; }, addMetaTag() { return this; }, setXFrameOptionsMode() { return this; }, setFaviconUrl() { return this; } }) }),
       createHtmlOutputFromFile: n => ({ getContent: () => fs.readFileSync(path.join(SRC, n + '.html'), 'utf8') }),
-      createHtmlOutput: h => ({ setWidth() { return this; }, setHeight() { return this; } }),
+      createHtmlOutput: h => ({ _h: h, setWidth() { return this; }, setHeight() { return this; } }),
       XFrameOptionsMode: { ALLOWALL: 1 }
     },
     Logger: { log() {} },

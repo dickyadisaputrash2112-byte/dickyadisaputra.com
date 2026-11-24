@@ -57,3 +57,14 @@ console.log('sheets', Object.keys(g._sheets).map(k => k + ':' + g._sheets[k]._da
 try { call('updateTransaction', { id: tx.items[0].id, category: 'Ngawur' }); } catch (e) { console.log('validated:', e.message); }
 console.log(JSON.stringify(call('allocation', {}).groups.map(g => [g.key, g.items.map(i => i.name + ':' + i.budget + ':' + i.used)])));
 console.log('goal thisMonth', call('goals', {})[0].thisMonth);
+
+// Menu Mulai: salinan baru belum punya aplikasi web → tampilkan langkah terbitkan, bukan link
+{
+  const w = create({});
+  w.menuOpenApp(); const before = /belum diterbitkan/.test(w._dialog);
+  w.doGet(); w.menuOpenApp(); const after = /Link aplikasi kamu/.test(w._dialog);
+  const c = create({ scriptId: 'COPY' }); c._scriptProps.setProperty('CATAT_WEBAPP_LIVE', 'SCRIPT');
+  c.menuOpenApp(); const copy = /belum diterbitkan/.test(c._dialog);
+  const n = create({ notDeployed: true }); n.doGet(); n.menuOpenApp(); const off = /belum diterbitkan/.test(n._dialog);
+  console.log('webapp check', before && after && copy && off ? 'OK' : 'GAGAL', { before, after, copy, off });
+}
